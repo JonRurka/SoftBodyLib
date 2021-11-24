@@ -3,7 +3,7 @@
 #include "../ForwardDeclarations.h"
 
 namespace SoftBodyLib {
-    namespace Math {
+    namespace Util {
 
         typedef float Real;
 
