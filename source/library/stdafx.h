@@ -11,13 +11,13 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <list>
 #include <utility>
 #include <stdlib.h>
 #include <ostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-
 
 /*#include <map>
 #include <string>

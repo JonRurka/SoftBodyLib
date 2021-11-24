@@ -18,4 +18,17 @@ namespace SoftBodyLib {
 	struct collision_box_t;
 
 	struct ground_model_t;
+
+	namespace Util {
+		typedef float Real;
+
+		class Radian;
+		class Degree;
+		class Angle;
+
+		class Ray;
+		class Plane;
+		class Sphere;
+		class AxisAlignedBox;
+	}
 }

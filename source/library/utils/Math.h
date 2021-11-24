@@ -5,17 +5,6 @@
 namespace SoftBodyLib {
     namespace Util {
 
-        typedef float Real;
-
-        class Radian;
-        class Degree;
-        class Angle;
-
-        class Ray;
-        class Plane;
-        class Sphere;
-        class AxisAlignedBox;
-
         class Radian
         {
             Real mRad;
@@ -160,8 +149,10 @@ namespace SoftBodyLib {
 
             void buildTrigTables();
 
-            static Real SinTable(Real fValue);
-            static Real TanTable(Real fValue);
+            static float SinTable(float fValue);
+            static float TanTable(float fValue);
+
+            
         public:
             Math(unsigned int trigTableSize = 4096);
 
@@ -170,7 +161,9 @@ namespace SoftBodyLib {
             static inline int IAbs(int iValue) { return (iValue >= 0 ? iValue : -iValue); }
             static inline int ICeil(float fValue) { return int(ceil(fValue)); }
             static inline int IFloor(float fValue) { return int(floor(fValue)); }
-            static int ISign(int iValue);
+            static int ISign(int iValue) {
+                return (iValue > 0 ? +1 : (iValue < 0 ? -1 : 0));
+            }
 
             static inline Real Abs(Real fValue) { return Real(fabs(fValue)); }
             static inline Degree Abs(const Degree& dValue) { return Degree(fabs(dValue.valueDegrees())); }
@@ -208,7 +201,15 @@ namespace SoftBodyLib {
 
             static inline Real Pow(Real fBase, Real fExponent) { return Real(pow(fBase, fExponent)); }
 
-            static Real Sign(Real fValue);
+            static Real Sign(Real fValue)
+            {
+                if (fValue > 0.0)
+                    return 1.0;
+                if (fValue < 0.0)
+                    return -1.0;
+                return 0.0;
+            }
+
             static inline Radian Sign(const Radian& rValue)
             {
                 return Radian(Sign(rValue.valueRadians()));
@@ -233,13 +234,19 @@ namespace SoftBodyLib {
 
             static inline Degree Sqrt(const Degree& fValue) { return Degree(sqrt(fValue.valueDegrees())); }
 
-            static Real InvSqrt(Real fValue);
+            static Real InvSqrt(Real fValue) {
+                return Real(1.) / std::sqrt(fValue);
+            }
 
             static Real UnitRandom();  // in [0,1]
 
-            static Real RangeRandom(Real fLow, Real fHigh);  // in [fLow,fHigh]
+            static Real RangeRandom(Real fLow, Real fHigh) { // in [fLow,fHigh]
+                return (fHigh - fLow) * UnitRandom() + fLow;
+            }  
 
-            static Real SymmetricRandom();  // in [-1,1]
+            static Real SymmetricRandom() { // in [-1,1]
+                return 2.0f * UnitRandom() - 1.0f;
+            }  
 
             static inline Real Tan(const Radian& fValue, bool useTables = false) {
                 return (!useTables) ? Real(tan(fValue.valueRadians())) : TanTable(fValue.valueRadians());
@@ -254,10 +261,10 @@ namespace SoftBodyLib {
             static void setAngleUnit(AngleUnit unit);
             static AngleUnit getAngleUnit(void);
 
-            static Real AngleUnitsToRadians(Real units);
-            static Real RadiansToAngleUnits(Real radians);
-            static Real AngleUnitsToDegrees(Real units);
-            static Real DegreesToAngleUnits(Real degrees);
+            static float AngleUnitsToRadians(float units);
+            static float RadiansToAngleUnits(float radians);
+            static float AngleUnitsToDegrees(float units);
+            static float DegreesToAngleUnits(float degrees);
 
             static bool pointInTri2D(const glm::vec2& p, const glm::vec2& a,
                 const glm::vec2& b, const glm::vec2& c);
@@ -300,7 +307,9 @@ namespace SoftBodyLib {
             static bool intersects(const Sphere& sphere, const Plane& plane);
 
             static bool RealEqual(Real a, Real b,
-                Real tolerance = std::numeric_limits<Real>::epsilon());
+                Real tolerance = std::numeric_limits<Real>::epsilon()) {
+                return std::abs(b - a) <= tolerance;
+            }
 
             static glm::vec3 calculateTangentSpaceVector(
                 const glm::vec3& position1, const glm::vec3& position2, const glm::vec3& position3,
