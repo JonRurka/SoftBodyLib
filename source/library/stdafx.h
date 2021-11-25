@@ -3,7 +3,6 @@
 #pragma execution_character_set("utf-8")
 
 #define NOMINMAX
-//#define BOOST_ASIO_NO_TS_EXECUTORS
 
 #include <cstdio>
 #include <memory>
@@ -15,9 +14,11 @@
 #include <utility>
 #include <stdlib.h>
 #include <ostream>
+#include <array>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/norm.hpp>
 
 /*#include <map>
 #include <string>

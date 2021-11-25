@@ -1,19 +1,14 @@
 #include "Math.h"
 
+#include "Sphere.h"
+#include "Plane.h"
+#include "Ray.h"
+#include "AxisAlignedBox.h"
+
 namespace SoftBodyLib {
     namespace Util {
 
         #define INFINITE_FAR_PLANE_ADJUST  0.00001
-
-        constexpr Real Math::POS_INFINITY;
-        constexpr Real Math::NEG_INFINITY;
-        constexpr Real Math::PI;
-        constexpr Real Math::TWO_PI;
-        constexpr Real Math::HALF_PI;
-        constexpr float Math::fDeg2Rad;
-        constexpr float Math::fRad2Deg;
-        constexpr Real Math::LOG2;
-
 
         int Math::mTrigTableSize;
         Math::AngleUnit Math::msAngleUnit;
@@ -24,26 +19,7 @@ namespace SoftBodyLib {
 
         //Math::RandomValueProvider* Math::mRandProvider = NULL;
 
-        inline Real crossProduct(const glm::vec2 v1, const glm::vec2& rkVector)
-        {
-            return v1.x * rkVector.y - v1.y * rkVector.x;
-        }
-
-        inline glm::vec3 makeFloor(glm::vec3 o, const glm::vec3& cmp)
-        {
-            if (cmp.x < o.x) o.x = cmp.x;
-            if (cmp.y < o.y) o.y = cmp.y;
-            if (cmp.z < o.z) o.z = cmp.z;
-            return o;
-        }
         
-        inline glm::vec3 makeCeil(glm::vec3 o, const glm::vec3 & cmp)
-        {
-            if (cmp.x > o.x) o.x = cmp.x;
-            if (cmp.y > o.y) o.y = cmp.y;
-            if (cmp.z > o.z) o.z = cmp.z;
-            return o;
-        }
 
 
         Math::Math(unsigned int trigTableSize)
@@ -104,6 +80,7 @@ namespace SoftBodyLib {
             int idx = int(fValue *= mTrigTableFactor) % mTrigTableSize;
             return mTanTable[idx];
         }
+        
         //-----------------------------------------------------------------------
         Radian Math::ACos(Real fValue)
         {
@@ -119,6 +96,7 @@ namespace SoftBodyLib {
                 return Radian(PI);
             }
         }
+        
         //-----------------------------------------------------------------------
         Radian Math::ASin(Real fValue)
         {
@@ -134,6 +112,7 @@ namespace SoftBodyLib {
                 return Radian(-HALF_PI);
             }
         }
+        
         //-----------------------------------------------------------------------
         Real Math::UnitRandom()
         {
@@ -156,11 +135,13 @@ namespace SoftBodyLib {
         {
             msAngleUnit = unit;
         }
+        
         //-----------------------------------------------------------------------
         Math::AngleUnit Math::getAngleUnit(void)
         {
             return msAngleUnit;
         }
+        
         //-----------------------------------------------------------------------
         float Math::AngleUnitsToRadians(float angleunits)
         {
@@ -248,6 +229,7 @@ namespace SoftBodyLib {
 
             return true;
         }
+        
         //-----------------------------------------------------------------------
         bool Math::pointInTri3D(const glm::vec3& p, const glm::vec3& a,
             const glm::vec3& b, const glm::vec3& c, const glm::vec3& normal)
@@ -299,103 +281,76 @@ namespace SoftBodyLib {
 
             return true;
         }
+        
+        // used?
         //-----------------------------------------------------------------------
-        std::pair<bool, Real> Math::intersects(const Ray& ray,
-            const std::list<Plane>& planes, bool normalIsOutside)
+        std::pair<bool, Real> Math::intersects(const Ray& ray, const glm::vec3& a, const glm::vec3& b,
+            const glm::vec3& c, bool positiveSide, bool negativeSide)
         {
-            std::vector<Plane> planesVec;
-            planesVec.reserve(planes.size());
-            for (std::list<Plane>::const_iterator i = planes.begin(); i != planes.end(); ++i)
-            {
-                planesVec.push_back(*i);
-            }
-            return intersects(ray, planesVec, normalIsOutside);
+            const Real EPSILON = 1e-6f;
+            glm::vec3 E1 = b - a;
+            glm::vec3 E2 = c - a;
+            glm::vec3 P = glm::cross(ray.getDirection(), E2);
+            Real det = glm::dot(E1, P);
+            //Real det = E1.dotProduct(P);
+
+            // if determinant is near zero, ray lies in plane of triangle
+            if ((!positiveSide || det <= EPSILON) && (!negativeSide || det >= -EPSILON))
+                return { false, (Real)0 };
+            Real inv_det = 1.0f / det;
+
+            // calculate u parameter and test bounds
+            glm::vec3 T = ray.getOrigin() - a;
+            Real u = glm::dot(T, P) *inv_det;
+            if (u < 0.0f || u > 1.0f)
+                return { false, (Real)0 };
+
+            // calculate v parameter and test bounds
+            //glm::vec3 Q = T.crossProduct(E1);
+            glm::vec3 Q = glm::cross(T, E1);
+            Real v = glm::dot(ray.getDirection(), Q) * inv_det; //ray.getDirection().dotProduct(Q) * inv_det;
+            if (v < 0.0f || u + v > 1.0f)
+                return { false, (Real)0 };
+
+            // calculate t, ray intersects triangle
+            Real t = glm::dot(E2, Q) * inv_det;
+            if (t < 0.0f)
+                return { false, (Real)0 };
+
+            return { true, t };
         }
-
-
+        
         //-----------------------------------------------------------------------
-        std::pair<bool, Real> Math::intersects(const Ray& ray,
-            const std::vector<Plane>& planes, bool normalIsOutside)
+        bool Math::intersects(const Sphere& sphere, const AxisAlignedBox& box)
         {
-            std::vector<Plane>::const_iterator planeit, planeitend;
-            planeitend = planes.end();
-            bool allInside = true;
-            std::pair<bool, Real> ret;
-            std::pair<bool, Real> end;
-            ret.first = false;
-            ret.second = 0.0f;
-            end.first = false;
-            end.second = 0;
+            if (box.isNull()) return false;
+            if (box.isInfinite()) return true;
 
+            // Use splitting planes
+            const glm::vec3& center = sphere.getCenter();
+            Real radius = sphere.getRadius();
+            const glm::vec3& min = box.getMinimum();
+            const glm::vec3& max = box.getMaximum();
 
-            // derive side
-            // NB we don't pass directly since that would require Plane::Side in 
-            // interface, which results in recursive includes since Math is so fundamental
-            Plane::Side outside = normalIsOutside ? Plane::POSITIVE_SIDE : Plane::NEGATIVE_SIDE;
-
-            for (planeit = planes.begin(); planeit != planeitend; ++planeit)
+            // Arvo's algorithm
+            Real s, d = 0;
+            for (int i = 0; i < 3; ++i)
             {
-                const Plane& plane = *planeit;
-                // is origin outside?
-                if (plane.getSide(ray.getOrigin()) == outside)
+                if (center[i] < min[i])
                 {
-                    allInside = false;
-                    // Test single plane
-                    std::pair<bool, Real> planeRes =
-                        ray.intersects(plane);
-                    if (planeRes.first)
-                    {
-                        // Ok, we intersected
-                        ret.first = true;
-                        // Use the most distant result since convex volume
-                        ret.second = std::max(ret.second, planeRes.second);
-                    }
-                    else
-                    {
-                        ret.first = false;
-                        ret.second = 0.0f;
-                        return ret;
-                    }
+                    s = center[i] - min[i];
+                    d += s * s;
                 }
-                else
+                else if (center[i] > max[i])
                 {
-                    std::pair<bool, Real> planeRes =
-                        ray.intersects(plane);
-                    if (planeRes.first)
-                    {
-                        if (!end.first)
-                        {
-                            end.first = true;
-                            end.second = planeRes.second;
-                        }
-                        else
-                        {
-                            end.second = std::min(planeRes.second, end.second);
-                        }
-
-                    }
-
+                    s = center[i] - max[i];
+                    d += s * s;
                 }
             }
+            return d <= radius * radius;
 
-            if (allInside)
-            {
-                // Intersecting at 0 distance since inside the volume!
-                ret.first = true;
-                ret.second = 0.0f;
-                return ret;
-            }
-
-            if (end.first)
-            {
-                if (end.second < ret.second)
-                {
-                    ret.first = false;
-                    return ret;
-                }
-            }
-            return ret;
         }
+        
         //-----------------------------------------------------------------------
         std::pair<bool, Real> Math::intersects(const Ray& ray, const AxisAlignedBox& box)
         {
@@ -412,7 +367,8 @@ namespace SoftBodyLib {
             const glm::vec3& raydir = ray.getDirection();
 
             // Check origin inside first
-            if (rayorig > min && rayorig < max)
+            //glm::greaterThan()
+            if (glm::all(glm::greaterThan(rayorig, min)) && glm::all(glm::lessThan(rayorig, max)))
             {
                 return std::pair<bool, Real>(true, (Real)0);
             }
@@ -512,160 +468,7 @@ namespace SoftBodyLib {
             return std::pair<bool, Real>(hit, (Real)lowt);
 
         }
-        //-----------------------------------------------------------------------
-        bool Math::intersects(const Ray& ray, const AxisAlignedBox& box,
-            Real* d1, Real* d2)
-        {
-            if (box.isNull())
-                return false;
 
-            if (box.isInfinite())
-            {
-                if (d1) *d1 = 0;
-                if (d2) *d2 = Math::POS_INFINITY;
-                return true;
-            }
-
-            const glm::vec3& min = box.getMinimum();
-            const glm::vec3& max = box.getMaximum();
-            const glm::vec3& rayorig = ray.getOrigin();
-            const glm::vec3& raydir = ray.getDirection();
-
-            glm::vec3 absDir;
-            absDir[0] = Math::Abs(raydir[0]);
-            absDir[1] = Math::Abs(raydir[1]);
-            absDir[2] = Math::Abs(raydir[2]);
-
-            // Sort the axis, ensure check minimise floating error axis first
-            int imax = 0, imid = 1, imin = 2;
-            if (absDir[0] < absDir[2])
-            {
-                imax = 2;
-                imin = 0;
-            }
-            if (absDir[1] < absDir[imin])
-            {
-                imid = imin;
-                imin = 1;
-            }
-            else if (absDir[1] > absDir[imax])
-            {
-                imid = imax;
-                imax = 1;
-            }
-
-            Real start = 0, end = Math::POS_INFINITY;
-
-#define _CALC_AXIS(i)                                       \
-    do {                                                    \
-        Real denom = 1 / raydir[i];                         \
-        Real newstart = (min[i] - rayorig[i]) * denom;      \
-        Real newend = (max[i] - rayorig[i]) * denom;        \
-        if (newstart > newend) std::swap(newstart, newend); \
-        if (newstart > end || newend < start) return false; \
-        if (newstart > start) start = newstart;             \
-        if (newend < end) end = newend;                     \
-    } while(0)
-
-            // Check each axis in turn
-
-            _CALC_AXIS(imax);
-
-            if (absDir[imid] < std::numeric_limits<Real>::epsilon())
-            {
-                // Parallel with middle and minimise axis, check bounds only
-                if (rayorig[imid] < min[imid] || rayorig[imid] > max[imid] ||
-                    rayorig[imin] < min[imin] || rayorig[imin] > max[imin])
-                    return false;
-            }
-            else
-            {
-                _CALC_AXIS(imid);
-
-                if (absDir[imin] < std::numeric_limits<Real>::epsilon())
-                {
-                    // Parallel with minimise axis, check bounds only
-                    if (rayorig[imin] < min[imin] || rayorig[imin] > max[imin])
-                        return false;
-                }
-                else
-                {
-                    _CALC_AXIS(imin);
-                }
-            }
-#undef _CALC_AXIS
-
-            if (d1) *d1 = start;
-            if (d2) *d2 = end;
-
-            return true;
-        }
-        //-----------------------------------------------------------------------
-        std::pair<bool, Real> Math::intersects(const Ray& ray, const glm::vec3& a, const glm::vec3& b,
-            const glm::vec3& c, bool positiveSide, bool negativeSide)
-        {
-            const Real EPSILON = 1e-6f;
-            glm::vec3 E1 = b - a;
-            glm::vec3 E2 = c - a;
-            glm::vec3 P = ray.getDirection().crossProduct(E2);
-            Real det = glm::dot(E1, P);
-            //Real det = E1.dotProduct(P);
-
-            // if determinant is near zero, ray lies in plane of triangle
-            if ((!positiveSide || det <= EPSILON) && (!negativeSide || det >= -EPSILON))
-                return { false, (Real)0 };
-            Real inv_det = 1.0f / det;
-
-            // calculate u parameter and test bounds
-            glm::vec3 T = ray.getOrigin() - a;
-            Real u =/* T.dotProduct(P) */ glm::dot(T, P) *inv_det;
-            if (u < 0.0f || u > 1.0f)
-                return { false, (Real)0 };
-
-            // calculate v parameter and test bounds
-            //glm::vec3 Q = T.crossProduct(E1);
-            glm::vec3 Q = glm::cross(T, E1);
-            Real v = ray.getDirection().dotProduct(Q) * inv_det;
-            if (v < 0.0f || u + v > 1.0f)
-                return { false, (Real)0 };
-
-            // calculate t, ray intersects triangle
-            Real t = glm::dot(E2, Q) /*E2.dotProduct(Q)*/ * inv_det;
-            if (t < 0.0f)
-                return { false, (Real)0 };
-
-            return { true, t };
-        }
-        //-----------------------------------------------------------------------
-        bool Math::intersects(const Sphere& sphere, const AxisAlignedBox& box)
-        {
-            if (box.isNull()) return false;
-            if (box.isInfinite()) return true;
-
-            // Use splitting planes
-            const glm::vec3& center = sphere.getCenter();
-            Real radius = sphere.getRadius();
-            const glm::vec3& min = box.getMinimum();
-            const glm::vec3& max = box.getMaximum();
-
-            // Arvo's algorithm
-            Real s, d = 0;
-            for (int i = 0; i < 3; ++i)
-            {
-                if (center[i] < min[i])
-                {
-                    s = center[i] - min[i];
-                    d += s * s;
-                }
-                else if (center[i] > max[i])
-                {
-                    s = center[i] - max[i];
-                    d += s * s;
-                }
-            }
-            return d <= radius * radius;
-
-        }
         //-----------------------------------------------------------------------
         glm::vec3 Math::calculateTangentSpaceVector(
             const glm::vec3& position1, const glm::vec3& position2, const glm::vec3& position3,
@@ -704,6 +507,7 @@ namespace SoftBodyLib {
             return tangent;
 
         }
+        
         //-----------------------------------------------------------------------
         /*Affine3 Math::buildReflectionMatrix(const Plane & p)
         {
@@ -712,6 +516,7 @@ namespace SoftBodyLib {
                 -2 * p.normal.y * p.normal.x, -2 * p.normal.y * p.normal.y + 1, -2 * p.normal.y * p.normal.z, -2 * p.normal.y * p.d,
                 -2 * p.normal.z * p.normal.x, -2 * p.normal.z * p.normal.y, -2 * p.normal.z * p.normal.z + 1, -2 * p.normal.z * p.d);
         }*/
+        
         //-----------------------------------------------------------------------
         Real Math::gaussianDistribution(Real x, Real offset, Real scale)
         {
@@ -722,6 +527,7 @@ namespace SoftBodyLib {
             return nom / denom;
 
         }
+        
         //---------------------------------------------------------------------
         /*Affine3 Math::makeViewMatrix(const glm::vec3& position, const Quaternion& orientation,
             const Affine3* reflectMatrix)
@@ -809,16 +615,16 @@ namespace SoftBodyLib {
             //magnitude.makeCeil(min);
             //magnitude.makeCeil(-min);
 
-            return magnitude.length();
+            return glm::length(magnitude);
         }
 
-        Real Math::boundingRadiusFromAABBCentered(const AxisAlignedBox& aabb)
+        /*Real Math::boundingRadiusFromAABBCentered(const AxisAlignedBox& aabb)
         {
             const glm::vec3& max = aabb.getMaximum();
             const glm::vec3& min = aabb.getMinimum();
 
-            return ((min - max) * 0.5f).length();
-        }
+            return glm::length((min - max) * 0.5f);
+        }*/
         
         inline glm::vec3 Math::calculateBasicFaceNormal(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3)
         {
@@ -826,12 +632,14 @@ namespace SoftBodyLib {
             normal = glm::normalize(normal);
             return normal;
         }
+        
         inline glm::vec4 Math::calculateFaceNormal(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3)
         {
             glm::vec3 normal = calculateBasicFaceNormal(v1, v2, v3);
             // Now set up the w (distance of tri from origin
             return glm::vec4(normal.x, normal.y, normal.z, -( glm::dot(normal, v1) /*normal.dotProduct(v1)*/  ));
         }
+        
         inline glm::vec3 Math::calculateBasicFaceNormalWithoutNormalize(
             const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3)
         {

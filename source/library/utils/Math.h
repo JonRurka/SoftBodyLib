@@ -5,6 +5,15 @@
 namespace SoftBodyLib {
     namespace Util {
 
+        /** A pair structure where the first element indicates whether
+            an intersection occurs
+
+            if true, the second element will
+            indicate the distance along the ray at which it intersects.
+            This can be converted to a point in space by calling Ray::getPoint().
+        */
+        typedef std::pair<bool, Real> RayTestResult;
+
         class Radian
         {
             Real mRad;
@@ -158,6 +167,28 @@ namespace SoftBodyLib {
 
             ~Math();
 
+            static inline Real crossProduct(const glm::vec2 v1, const glm::vec2& rkVector)
+            {
+                return v1.x * rkVector.y - v1.y * rkVector.x;
+            }
+
+            static inline glm::vec3 makeFloor(glm::vec3 o, const glm::vec3& cmp)
+            {
+                if (cmp.x < o.x) o.x = cmp.x;
+                if (cmp.y < o.y) o.y = cmp.y;
+                if (cmp.z < o.z) o.z = cmp.z;
+                return o;
+            }
+
+            static inline glm::vec3 makeCeil(glm::vec3 o, const glm::vec3& cmp)
+            {
+                if (cmp.x > o.x) o.x = cmp.x;
+                if (cmp.y > o.y) o.y = cmp.y;
+                if (cmp.z > o.z) o.z = cmp.z;
+                return o;
+            }
+
+
             static inline int IAbs(int iValue) { return (iValue >= 0 ? iValue : -iValue); }
             static inline int ICeil(float fValue) { return int(ceil(fValue)); }
             static inline int IFloor(float fValue) { return int(floor(fValue)); }
@@ -272,19 +303,7 @@ namespace SoftBodyLib {
             static bool pointInTri3D(const glm::vec3& p, const glm::vec3& a,
                 const glm::vec3& b, const glm::vec3& c, const glm::vec3& normal);
 
-            static std::pair<bool, Real> intersects(const Ray& ray, const Plane& plane);
-
-            static std::pair<bool, Real> intersects(const Ray& ray, const Sphere& sphere,
-                bool discardInside = true);
-
             static std::pair<bool, Real> intersects(const Ray& ray, const AxisAlignedBox& box);
-
-            static bool intersects(const Ray& ray, const AxisAlignedBox& box,
-                Real* d1, Real* d2);
-
-            static std::pair<bool, Real> intersects(const Ray& ray, const glm::vec3& a,
-                const glm::vec3& b, const glm::vec3& c, const glm::vec3& normal,
-                bool positiveSide = true, bool negativeSide = true);
 
             static std::pair<bool, Real> intersects(const Ray& ray, const glm::vec3& a,
                 const glm::vec3& b, const glm::vec3& c,
@@ -293,16 +312,6 @@ namespace SoftBodyLib {
             static bool intersects(const Sphere& sphere, const AxisAlignedBox& box);
 
             static bool intersects(const Plane& plane, const AxisAlignedBox& box);
-
-            // TODO:
-            /*static std::pair<bool, Real> intersects(
-                const Ray& ray, const vector<Plane>::type& planeList,
-                bool normalIsOutside);*/
-
-                /*
-                static std::pair<bool, Real> intersects(
-                    const Ray& ray, const list<Plane>::type& planeList,
-                    bool normalIsOutside);*/
 
             static bool intersects(const Sphere& sphere, const Plane& plane);
 
@@ -337,13 +346,13 @@ namespace SoftBodyLib {
 
 
 
-            static const Real POS_INFINITY;
-            static const Real NEG_INFINITY;
-            static const Real PI;
-            static const Real TWO_PI;
-            static const Real HALF_PI;
-            static const Real fDeg2Rad;
-            static const Real fRad2Deg;
+            static constexpr Real POS_INFINITY = std::numeric_limits<Real>::infinity();
+            static constexpr Real NEG_INFINITY = -std::numeric_limits<Real>::infinity();
+            static constexpr Real PI = 3.14159265358979323846;
+            static constexpr Real TWO_PI = Real(2.0 * PI);
+            static constexpr Real HALF_PI = Real(0.5 * PI);
+            static constexpr float fDeg2Rad = PI / Real(180.0);
+            static constexpr float fRad2Deg = Real(180.0) / PI;
 
         };
 
@@ -400,5 +409,34 @@ namespace SoftBodyLib {
             return Degree(a / b.valueDegrees());
         }
 
+        /*inline bool operator < (const glm::vec3& o, const glm::vec3& rhs) {
+            if (o.x < rhs.x && o.y < rhs.y && o.z < rhs.z)
+                return true;
+            return false;
+        }
+
+        inline bool operator > (const glm::vec3& o, const glm::vec3& rhs) {
+            if (o.x > rhs.x && o.y > rhs.y && o.z > rhs.z)
+                return true;
+            return false;
+        }
+
+        inline bool operator < (const glm::vec3& o, const glm::vec3& rhs) {
+            if (o.x < rhs.x && o.y < rhs.y && o.z < rhs.z)
+                return true;
+            return false;
+        }
+
+        inline bool operator > (const glm::vec2& o, const glm::vec2& rhs) {
+            if (o.x > rhs.x && o.y > rhs.y)
+                return true;
+            return false;
+        }
+
+        inline bool operator < (const glm::vec2& o, const glm::vec2& rhs) {
+            if (o.x < rhs.x && o.y < rhs.y)
+                return true;
+            return false;
+        }*/
     }
 }

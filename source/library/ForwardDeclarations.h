@@ -25,6 +25,7 @@ namespace SoftBodyLib {
 		class Radian;
 		class Degree;
 		class Angle;
+		class Math;
 
 		class Ray;
 		class Plane;
