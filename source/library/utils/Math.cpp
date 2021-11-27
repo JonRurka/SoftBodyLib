@@ -1,9 +1,4 @@
-#include "Math.h"
-
-#include "Sphere.h"
-#include "Plane.h"
-#include "Ray.h"
-#include "AxisAlignedBox.h"
+#include "utils.h"
 
 namespace SoftBodyLib {
     namespace Util {

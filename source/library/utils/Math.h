@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ForwardDeclarations.h"
+//#include "utils.h"
 
 namespace SoftBodyLib {
     namespace Util {

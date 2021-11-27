@@ -1,8 +1,6 @@
 #pragma once
 
 #include "../ForwardDeclarations.h"
-#include "Math.h"
-#include "Plane.h"
 
 namespace SoftBodyLib {
     namespace Util {
@@ -41,20 +39,17 @@ namespace SoftBodyLib {
                     Math::Sqr(s.mRadius + mRadius);
             }
             /** Returns whether or not this sphere intersects a box. */
-            bool intersects(const AxisAlignedBox& box) const
-            {
-                return Math::intersects(*this, box);
-            }
+            bool intersects(const AxisAlignedBox& box) const;
+
             /** Returns whether or not this sphere intersects a plane. */
-            bool intersects(const Plane& plane) const
-            {
-                return Math::Abs(plane.getDistance(getCenter())) <= getRadius();
-            }
+            bool intersects(const Plane& plane) const;
+
             /** Returns whether or not this sphere intersects a point. */
             bool intersects(const glm::vec3& v) const
             {
                 return (glm::length2(v - mCenter) <= Math::Sqr(mRadius));
             }
+
             /** Merges another Sphere into the current sphere */
             void merge(const Sphere& oth)
             {

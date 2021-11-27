@@ -25,12 +25,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
-#include "AxisAlignedBox.h"
+#include "utils.h"
 
 namespace SoftBodyLib {
     namespace Util {
         const AxisAlignedBox AxisAlignedBox::BOX_NULL;
         const AxisAlignedBox AxisAlignedBox::BOX_INFINITE(AxisAlignedBox::EXTENT_INFINITE);
+
+        /** Tests whether this box intersects a sphere. */
+        bool AxisAlignedBox::intersects(const Sphere& s) const
+        {
+            return Math::intersects(s, *this);
+        }
+
+        /** Tests whether this box intersects a plane. */
+        bool AxisAlignedBox::intersects(const Plane& p) const
+        {
+            return Math::intersects(p, *this);
+        }
+
+
     }
 }
 

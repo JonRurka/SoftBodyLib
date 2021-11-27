@@ -19,9 +19,7 @@
 
 #pragma once
 
-#include "Triangle.h"
-
-#include <glm/glm.hpp>
+#include "../Physics.h"
 
 
 /// Defines a linear transformation from cartesian coordinates to local (barycentric) coordinates of a specified triangle.
@@ -57,7 +55,7 @@ public:
     };
 
     /// Construct transformation for specified triangle.
-    explicit CartesianToTriangleTransform(const Triangle &triangle) : m_triangle{triangle}, m_initialized{false} {}
+    explicit CartesianToTriangleTransform(const Triangle &triangle) : m_triangle{triangle}, m_matrix(0), m_initialized{false} {}
 
     /// Transform point into local triangle coordinates.
     /**

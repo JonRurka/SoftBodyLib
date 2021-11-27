@@ -1,8 +1,10 @@
 #pragma once
 
 #include "../ForwardDeclarations.h"
-#include "Math.h"
+//#include "Math.h"
 //#include "Plane.h"
+
+//#include "utils.h"
 
 namespace SoftBodyLib {
     namespace Util {
@@ -60,7 +62,7 @@ namespace SoftBodyLib {
                 // Default to a null box 
                 setMinimum(-0.5, -0.5, -0.5);
                 setMaximum(0.5, 0.5, 0.5);
-                mExtent = EXTENT_NULL;
+                mExtent = Extent::EXTENT_NULL;
             }
             AxisAlignedBox(Extent e)
             {
@@ -261,7 +263,7 @@ namespace SoftBodyLib {
 
             /** Gets the position of one of the corners
             */
-            glm::vec3 getCorner(CornerEnum cornerToGet) const
+            glm::vec3 getCorner(AxisAlignedBox::CornerEnum cornerToGet) const
             {
                 switch (cornerToGet)
                 {
@@ -579,16 +581,10 @@ namespace SoftBodyLib {
             }
 
             /** Tests whether this box intersects a sphere. */
-            bool intersects(const Sphere& s) const
-            {
-                return Math::intersects(s, *this);
-            }
+            bool intersects(const Sphere& s) const;
 
             /** Tests whether this box intersects a plane. */
-            bool intersects(const Plane& p) const
-            {
-                return Math::intersects(p, *this);
-            }
+            bool intersects(const Plane& p) const;
 
             /** Tests whether the vector point is within this box. */
             bool intersects(const glm::vec3& v) const

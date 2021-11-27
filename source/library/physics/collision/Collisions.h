@@ -1,8 +1,11 @@
 #pragma once
 
-#include "../../ForwardDeclarations.h"
-#include "../SimData.h"
+#include "../Physics.h"
+
+
+#ifdef ZERO_MEM_ALLOC
 #include "../../utils/ZeroedMemoryAllocator.h"
+#endif
 
 
 namespace SoftBodyLib {
@@ -18,7 +21,11 @@ namespace SoftBodyLib {
         bool enabled;
     };
 
-    class Collisions : public ZeroedMemoryAllocator {
+    class Collisions 
+#ifdef ZERO_MEM_ALLOC
+        : public ZeroedMemoryAllocator 
+#endif
+    {
         enum SurfaceType
         {
             FX_NONE,
@@ -120,7 +127,7 @@ namespace SoftBodyLib {
         unsigned int hashfunc(unsigned int cellid);
 
         // TODO:
-        //void parseGroundConfig(Ogre::ConfigFile* cfg, Ogre::String groundModel = "");
+        void parseGroundConfig(void* cfg, std::string groundModel = "");
 
         glm::vec3 calcCollidedSide(const glm::vec3& pos, const glm::vec3& lo, const glm::vec3& hi);
 
@@ -136,7 +143,7 @@ namespace SoftBodyLib {
          collision_box_t* getBox(const std::string& inst, const std::string& box);
 
          // TODO:
-         //std::pair<bool, float> intersectsTris(Ogre::Ray ray);
+         std::pair<bool, SoftBodyLib::Util::Real> intersectsTris(SoftBodyLib::Util::Ray ray);
 
          float getSurfaceHeight(float x, float z);
          float getSurfaceHeightBelow(float x, float z, float height);

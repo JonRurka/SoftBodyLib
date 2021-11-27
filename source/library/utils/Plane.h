@@ -1,8 +1,10 @@
 #pragma once
 
 #include "../ForwardDeclarations.h"
-#include "Math.h"
-#include "AxisAlignedBox.h"
+//#include "Math.h"
+//#include "AxisAlignedBox.h"
+
+//#include "utils.h"
 
 namespace SoftBodyLib {
     namespace Util {
@@ -65,17 +67,7 @@ namespace SoftBodyLib {
             Returns the side where the alignedBox is. The flag BOTH_SIDE indicates an intersecting box.
             One corner ON the plane is sufficient to consider the box and the plane intersecting.
             */
-            Side getSide(const AxisAlignedBox& box) const
-            {
-                return NO_SIDE;
-
-                if (box.isNull())
-                    return NO_SIDE;
-                if (box.isInfinite())
-                    return BOTH_SIDE;
-
-                return getSide(box.getCenter(), box.getHalfSize());
-            }
+            Side getSide(const AxisAlignedBox& box) const;
 
             /** Returns which side of the plane that the given box lies on.
                 The box is defined as centre/half-size pairs for effectively.

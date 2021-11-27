@@ -1,7 +1,6 @@
 #pragma once
 
-#include "stdafx.h"
-#include "ForwardDeclarations.h"
+#include "physics/Physics.h"
 
 extern "C"
 {

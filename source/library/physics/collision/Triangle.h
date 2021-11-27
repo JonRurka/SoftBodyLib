@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "../../ForwardDeclarations.h"
+#include "../Physics.h"
 
 /// Represents a triangle in three-dimensional space.
 ///
@@ -31,7 +31,7 @@ class Triangle
 public:
     /// Construct triangle from three given vertices.
     explicit Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
-        : a{a}, b{b}, c{c}, u{a - c}, v{b - c}, m_initialized{false}
+        : a{a}, b{b}, c{c}, u{a - c}, v{b - c}, m_normal(0), m_initialized{false}
     {
     }
 

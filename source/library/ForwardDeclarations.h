@@ -5,7 +5,9 @@
 namespace SoftBodyLib {
 
 
-	class  PointColDetector;
+	class Actor;
+
+	class PointColDetector;
 
 	class ZeroedMemoryAllocator;
 	
