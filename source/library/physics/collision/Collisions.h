@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Physics.h"
-
+//#include "../Physics.h"
+#include "physics/Physics.h"
 
 #ifdef ZERO_MEM_ALLOC
 #include "../../utils/ZeroedMemoryAllocator.h"
