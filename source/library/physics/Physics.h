@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../ForwardDeclarations.h"
+#include "ForwardDeclarations.h"
+//#include "../ForwardDeclarations.h"
 #include "SimData.h"
 
 #include "ApproxMath.h"
-#include "../utils/utils.h"
+#include "utils/utils.h"
+//#include "../utils/utils.h"
 
 #include "SimConstants.h"
 #include "Actor.h"

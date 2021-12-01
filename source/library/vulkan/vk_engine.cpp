@@ -194,7 +194,10 @@ bool VulkanEngine::allocateBufferMemoryAndBind()
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = requiredMemorySize;
 	allocateInfo.memoryTypeIndex = memoryTypeIndex;
+	
+	
 
+	
 	if (vkAllocateMemory(device, &allocateInfo, nullptr, &memory) != VK_SUCCESS) {
 		printf("failed to allocate buffer memory");
 		return false;
@@ -380,6 +383,7 @@ bool VulkanBuffer::createBuffer()
 	bufferCreateInfo.size = stride * size;
 	bufferCreateInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	//VK_SHAREING_MODE_
 	bufferCreateInfo.queueFamilyIndexCount = 1;
 	bufferCreateInfo.pQueueFamilyIndices = &engine->computeQueueFamily;
 
@@ -391,6 +395,10 @@ bool VulkanBuffer::createBuffer()
 	engine->addComputeBuffer(buff);
 
 	return true;
+}
+
+bool VulkanBuffer::createBuffer() {
+
 }
 
 bool VulkanBuffer::SetData(void* inData)

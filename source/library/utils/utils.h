@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../ForwardDeclarations.h"
+#include "ForwardDeclarations.h"
+//#include "../ForwardDeclarations.h"
 
 #include "Math.h"
 #include "Plane.h"
