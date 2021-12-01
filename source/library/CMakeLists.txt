@@ -13,5 +13,5 @@ set(${PROJECT_NAME}_sources
 add_subdirectory(physics)
 add_subdirectory(utils)
 
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_headers} ${${PROJECT_NAME}_sources})
+add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_headers} ${${PROJECT_NAME}_sources})
 target_link_libraries(${PROJECT_NAME} Utils Physics)
