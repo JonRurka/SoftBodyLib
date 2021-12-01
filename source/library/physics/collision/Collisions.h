@@ -148,10 +148,10 @@ namespace SoftBodyLib {
          float getSurfaceHeight(float x, float z);
          float getSurfaceHeightBelow(float x, float z, float height);
          bool collisionCorrect(glm::vec3* refpos, bool envokeScriptCallbacks = true);
-         bool groundCollision(node_t* node, float dt);
+         bool groundCollision(node_t* node, float dt); // 1st in Actor::CalcNodes()
          bool isInside(glm::vec3 pos, const std::string& inst, const std::string& box, float border = 0);
          bool isInside(glm::vec3 pos, collision_box_t* cbox, float border = 0);
-         bool nodeCollision(node_t* node, float dt, bool envokeScriptCallbacks = true);
+         bool nodeCollision(node_t* node, float dt, bool envokeScriptCallbacks = true); // 2nd/3rd in Actor::CalcNodes()
 
          void finishLoadingTerrain();
 

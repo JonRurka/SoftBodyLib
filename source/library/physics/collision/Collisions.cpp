@@ -207,6 +207,7 @@ bool Collisions::permitEvent(CollisionEventFilter filter)
     return false;
 }
 
+// 2nd/3rd in Actor::CalcNodes()
 bool Collisions::nodeCollision(node_t* node, float dt, bool envokeScriptCallbacks)
 {
     return false;
@@ -237,14 +238,120 @@ bool Collisions::isInside(glm::vec3 pos, collision_box_t* cbox, float border)
     return false;
 }
 
+// 1st in Actor::CalcNodes()
 bool Collisions::groundCollision(node_t* node, float dt)
 {
+    Real v = 0; // TODO: get height or ISO val: App::GetSimTerrain()->GetHeightAt(node->AbsPosition.x, node->AbsPosition.z);
+    if (v > node->AbsPosition.y)
+    {
+        ground_model_t* ogm = nullptr; // landuse ? landuse->getGroundModelAt(node->AbsPosition.x, node->AbsPosition.z) : nullptr;
+        // when landuse fails or we don't have it, use the default value
+        if (!ogm)
+            ogm = defaultgroundgm;
+        glm::vec3 normal(0, 1, 0); //App::GetSimTerrain()->GetNormalAt(node->AbsPosition.x, v, node->AbsPosition.z);
+        node->Forces += primitiveCollision(node, node->Velocity, node->mass, normal, dt, ogm, v - node->AbsPosition.y);
+        node->nd_last_collision_gm = ogm;
+        return true;
+    }
+    return false;
+
+
+
     return false;
 }
 
 glm::vec3 SoftBodyLib::primitiveCollision(node_t* node, glm::vec3 velocity, float mass, glm::vec3 normal, float dt, ground_model_t* gm, float penetration)
 {
-    return glm::vec3(0);
+    glm::vec3 force(0, 0, 0);
+
+    float Vnormal = glm::dot(velocity, normal);
+    float Fnormal = glm::dot(node->Forces, normal);
+
+    // if we are inside the fluid (solid ground is below us)
+    if (gm->solid_ground_level != 0.0f && penetration >= 0)
+    {
+        // TODO:
+        float Vsquared = glm::length2(velocity);
+
+        // First of all calculate power law fluid viscosity
+        float m = gm->flow_consistency_index * approx_pow(Vsquared, (gm->flow_behavior_index - 1.0f) * 0.5f);
+        
+        // Then calculate drag based on above. We'are using a simplified Stokes' drag.
+        // Per node fluid drag surface coefficient set by node property applies here
+
+        glm::vec3 Fdrag = velocity * (-m * node->surface_coef);
+
+        // If we have anisotropic drag
+        if (gm->drag_anisotropy < 1.0f && Vnormal > 0)
+        {
+            float da_factor;
+            if (Vsquared > gm->va * gm->va)
+                da_factor = 1.0f;
+            else
+                da_factor = Vsquared / (gm->va * gm->va);
+            Fdrag += (Vnormal * m * (1.0f - gm->drag_anisotropy) * da_factor) * normal;
+        }
+        force += Fdrag;
+
+        // Now calculate upwards force based on a simplified boyancy equation;
+        // If the fluid is pseudoplastic then boyancy is constrained to only "stopping" a node from going downwards
+        // Buoyancy per node volume coefficient set by node property applies here
+        float Fboyancy = gm->fluid_density * penetration * (-DEFAULT_GRAVITY) * node->volume_coef;
+        if (gm->flow_behavior_index < 1.0f && Vnormal >= 0.0f)
+        {
+            if (Fnormal < 0 && Fboyancy > -Fnormal)
+            {
+                Fboyancy = -Fnormal;
+            }
+        }
+        force += Fboyancy * normal;
+
+    }
+
+    // if we are inside or touching the solid ground
+    if (penetration >= gm->solid_ground_level)
+    {
+        // steady force
+        float Freaction = -Fnormal;
+
+        //impact force
+        if (Vnormal < 0)
+        {
+            float penetration_depth = gm->solid_ground_level - penetration;
+            Freaction -= (0.8f * Vnormal + 0.2f * penetration_depth / dt) * mass / dt; // Newton's second law
+        }
+        if (Freaction > 0)
+        {
+            glm::vec3 slipf = node->Forces - Fnormal * normal;
+            glm::vec3 slip = velocity - Vnormal * normal;
+            float slipv = glm::length(slip);
+            slip = glm::normalize(slip);
+            // If the velocity that we slip is lower than adhesion velocity and
+            // we have a downforce and the slip forces are lower than static friction
+            // forces then it's time to go into static friction physics mode.
+            // This code is a direct translation of textbook static friction physics
+            float Greaction = Freaction * gm->strength * node->friction_coef; //General moderated reaction
+            float msGreaction = gm->ms * Greaction;
+            if (slipv < gm->va && Greaction > 0.0f && glm::length2(slipf) <= msGreaction * msGreaction) 
+            {
+                // Static friction model (with a little smoothing to help the integrator deal with it)
+                float ff = -msGreaction * (1.0f - approx_exp(-slipv / gm->va));
+                force += Freaction * normal + ff * slip - slipf;
+            }
+            else
+            {
+                // Stribek model. It also comes directly from textbooks.
+                float g = gm->mc + (gm->ms - gm->mc) * approx_exp(-approx_pow(slipv / gm->vs, gm->alpha));
+                float ff = -(g + std::min(gm->t2 * slipv, 5.0f)) * Greaction;
+                force += Freaction * normal + ff * slip;
+            }
+            node->nd_avg_collision_slip = node->nd_avg_collision_slip * 0.995f + slipv * 0.005f;
+            node->nd_last_collision_slip = slipv * slip;
+            node->nd_last_collision_force = std::min(-Freaction, 0.0f) * normal;
+        }
+    }
+
+    return force;
 }
 
 int Collisions::createCollisionDebugVisualization()

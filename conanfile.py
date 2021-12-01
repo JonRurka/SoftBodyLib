@@ -9,7 +9,8 @@ class SoftBodyLib(ConanFile):
     requires = (
         "spdlog/1.8.0",
         "boost/1.75.0",
-        "glm/0.9.9.8"
+        "glm/0.9.9.8",
+        "vk-bootstrap/0.4"
     )
 
     settings = "os", "compiler", "build_type", "arch"

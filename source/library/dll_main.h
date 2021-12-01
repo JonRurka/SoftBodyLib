@@ -8,4 +8,5 @@ extern "C"
 
 	int Init();
 
+	void UpdateActors(float m_dt_remainder, float m_simulation_time);
 }
