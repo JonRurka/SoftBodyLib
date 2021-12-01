@@ -18,6 +18,7 @@ mono_crash.*
 
 # Build results
 [Bb]uild/
+cmake-build-*/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -40,6 +41,9 @@ bld/
 
 # Visual Studio 2017 auto generated files
 Generated\ Files/
+
+# CLion project folder
+.idea
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

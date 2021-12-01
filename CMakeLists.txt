@@ -12,7 +12,4 @@ if (UNIX)
     set(CMAKE_CXX_FLAGS -pthread)
 endif ()
 
-add_library(SoftBodyLib SHARED source/library/dll_main.cpp)
-add_executable(SoftBodyLib_tester source/executable/exe_main.cpp)
-
-TARGET_LINK_LIBRARIES(SoftBodyLib_tester SoftBodyLib)
+add_subdirectory(source)
