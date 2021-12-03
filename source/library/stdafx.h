@@ -19,17 +19,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-/*#include <map>
-#include <string>
-#include <limits>
-#include <cmath>
-#include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <list>
-#include <cstdarg>
-#include <thread>*/
 
 
 #ifdef WINDOWS_BUILD

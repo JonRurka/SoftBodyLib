@@ -23,8 +23,14 @@ namespace SoftBodyLib {
 		std::vector<pointid_t*> hit_list;
 
 		PointColDetector(Actor* actor) : m_actor(actor), m_object_list_size(-1), m_bbmin(0), m_bbmax(0){};
+
+		
 		void UpdateIntraPoint(bool contactables = false);
+
+		
 		void UpdateInterPoint(bool ignorestate = false);
+
+
 		void query(const glm::vec3& vec1, const glm::vec3& vec2, const glm::vec3& vec3, const float enlargeBB);
 
 	private:
@@ -38,11 +44,13 @@ namespace SoftBodyLib {
 		struct kdnode_t
 		{
 			float min;
-			int end;
 			float max;
-			refelem_t* ref;
-			float middle;
+
 			int begin;
+			float middle;
+			int end;
+
+			refelem_t* ref;
 		};
 
 

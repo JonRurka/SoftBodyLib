@@ -8,7 +8,10 @@
 #endif
 
 
+
 namespace SoftBodyLib {
+
+    using namespace Util;
 
     struct eventsource_t
     {
@@ -66,7 +69,7 @@ namespace SoftBodyLib {
             glm::vec3 a;
             glm::vec3 b;
             glm::vec3 c;
-            //Ogre::AxisAlignedBox aab; // TODO
+            AxisAlignedBox aab;
             glm::mat3x3 forward;
             glm::mat3x3 reverse;
             ground_model_t* gm;
@@ -94,8 +97,7 @@ namespace SoftBodyLib {
         // collision tris pool;
         std::vector<collision_tri_t> m_collision_tris; // Formerly MAX_COLLISION_TRIS = 100000
 
-        // TODO:
-        //Ogre::AxisAlignedBox m_collision_aab; // Tight bounding box around all collision meshes 
+        AxisAlignedBox m_collision_aab; // Tight bounding box around all collision meshes 
 
         // collision hashtable
         float hashtable_height[HASH_SIZE];
@@ -142,7 +144,6 @@ namespace SoftBodyLib {
          glm::quat getDirection(const std::string& inst, const std::string& box);
          collision_box_t* getBox(const std::string& inst, const std::string& box);
 
-         // TODO:
          std::pair<bool, SoftBodyLib::Util::Real> intersectsTris(SoftBodyLib::Util::Ray ray);
 
          float getSurfaceHeight(float x, float z);
@@ -185,8 +186,7 @@ namespace SoftBodyLib {
          void removeCollisionTri(int number);
          void clearEventCache() { m_last_called_cboxes.clear(); }
 
-         // TODO:
-         //Ogre::AxisAlignedBox getCollisionAAB() { return m_collision_aab; };
+         AxisAlignedBox getCollisionAAB() { return m_collision_aab; };
 
          // ground models things
          int loadDefaultModels();
@@ -195,7 +195,7 @@ namespace SoftBodyLib {
          void setupLandUse(const char* configfile);
          ground_model_t* getGroundModelByString(const std::string name);
 
-         // TODO: Mesh
+         // TODO: Will not be necessary. Mesh will be imported directly
          void getMeshInformation(/*Ogre::Mesh*/ void* mesh, size_t& vertex_count, glm::vec3*& vertices,
              size_t& index_count, unsigned*& indices,
              const glm::vec3& position = glm::vec3(0, 0, 0),

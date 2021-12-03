@@ -180,7 +180,7 @@ bool Collisions::envokeScriptCallback(collision_box_t* cbox, node_t* node)
     return false;
 }
 
-std::pair<bool, Real> intersectsTris(Ray ray)
+std::pair<bool, Real> Collisions::intersectsTris(Ray ray)
 {
     return std::pair<bool, Real>();
 }
