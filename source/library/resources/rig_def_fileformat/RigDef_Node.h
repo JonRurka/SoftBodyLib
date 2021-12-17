@@ -1,10 +1,18 @@
 #pragma once
 
-#include "rigdef.h"
+#include "../../utils/BitFlags.h"
+#include <string>
+#include <memory>
+#include <vector>
+#include <sstream>
+#include <glm/glm.hpp>
+
+struct NodeDefaults;
+struct MinimassPreset;
+struct BeamDefaults;
 
 struct Node
 {
-//public:
     /// Abstract node ID (numbered or named)
     /// Node name is always available. For numbered nodes, it's the number converted to string.
     /// Node number is only available for explicitly numbered nodes (legacy).
@@ -17,8 +25,8 @@ struct Node
 
         // Constructors
         Id();
-        Id(unsigned int id_num);
-        Id(std::string const& id_str);
+        explicit Id(unsigned int id_num);
+        explicit Id(std::string const& id_str);
 
         // Setters
         void SetNum(unsigned int id_num);
@@ -26,7 +34,7 @@ struct Node
 
         // Getters
         inline std::string const& Str() const { return m_id_str; }
-        inline unsigned int        Num() const { return m_id_num; }
+        inline unsigned int       Num() const { return m_id_num; }
 
         // Util
         void Invalidate();
@@ -34,7 +42,6 @@ struct Node
 
 
     private:
-
         unsigned int m_id_num;
         std::string  m_id_str;
         unsigned int m_flags;
@@ -58,7 +65,7 @@ struct Node
         Ref();
 
         inline std::string const& Str() const { return m_id; }
-        inline unsigned int        Num() const { return m_id_as_number; }
+        inline unsigned int       Num() const { return m_id_as_number; }
 
         inline bool Compare(Ref const& rhs) const { return m_id == rhs.m_id; }
         inline bool operator==(Ref const& rhs) const { return Compare(rhs); }
@@ -85,7 +92,7 @@ struct Node
             end(end)
         {}
 
-        Range(Node::Ref const& single) :
+        explicit Range(Node::Ref const& single) :
             start(single),
             end(single)
         {}

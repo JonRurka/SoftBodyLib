@@ -1,4 +1,5 @@
 #include "PointColDetector.h"
+#include <algorithm>
 
 using namespace SoftBodyLib;
 

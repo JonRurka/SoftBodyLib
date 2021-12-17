@@ -1,22 +1,10 @@
 #include "RigDef_File.h"
 
+constexpr auto ROOT_MODULE_NAME = "_Root_";
 
-const char* ROOT_MODULE_NAME = "_Root_"; // Static
-
-NodeDefaults::NodeDefaults() :
-    load_weight(-1.f),
-    friction(1),
-    volume(1),
-    surface(1),
-    options(0)
+File::File()
+    : root_module(std::make_shared<File::Module>(ROOT_MODULE_NAME)) // Required to exist.
 {}
-
-File::File() :
-    file_format_version(0), // Default = unset
-    enable_advanced_deformation(false)
-{
-    root_module = std::make_shared<File::Module>(ROOT_MODULE_NAME); // Required to exist.
-}
 
 File::Module::Module(std::string const& name) :
     name(name)

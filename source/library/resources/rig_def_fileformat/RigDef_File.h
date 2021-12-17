@@ -1,8 +1,11 @@
 #pragma once
 
-#include "rigdef.h"
-//#include "physics/SimData.h"
 #include "physics/SimConstants.h"
+#include "RigDef_Node.h"
+
+#include <string>
+#include <memory>
+#include <unordered_map>
 
 /* -------------------------------------------------------------------------- */
 /* Directive SET_NODE_DEFAULTS                                                */
@@ -10,13 +13,11 @@
 
 struct NodeDefaults
 {
-    NodeDefaults();
-
-    float load_weight;
-    float friction;
-    float volume;
-    float surface;
-    unsigned int options; //!< Bit flags
+    float load_weight{ -1.f };
+    float friction{ 1 };
+    float volume{ 1 };
+    float surface{ 1 };
+    unsigned int options{ 0x00 }; //!< Bit flags
 };
 
 /* -------------------------------------------------------------------------- */
@@ -25,17 +26,10 @@ struct NodeDefaults
 
 struct BeamDefaultsScale
 {
-    BeamDefaultsScale() :
-        springiness(1),
-        damping_constant(1),
-        deformation_threshold_constant(1),
-        breaking_threshold_constant(1)
-    {}
-
-    float springiness;
-    float damping_constant;
-    float deformation_threshold_constant;
-    float breaking_threshold_constant;
+    float springiness{ 1 };
+    float damping_constant{ 1 };
+    float deformation_threshold_constant{ 1 };
+    float breaking_threshold_constant{ 1 };
 };
 
 
@@ -45,49 +39,38 @@ struct BeamDefaultsScale
 
 struct BeamDefaults
 {
-    BeamDefaults() : // NOTE: -1.f is 'empty value'; replaced by constant in parser.
-        springiness(-1.f),
-        damping_constant(-1.f),
-        deformation_threshold(-1.f),
-        visual_beam_diameter(-1.f),
-        beam_material_name("tracks/beam"),
-        plastic_deform_coef(0.f), // This is a default
-        breaking_threshold(-1.f),
-        enable_advanced_deformation(false),
-        is_plastic_deform_coef_user_defined(false),
-        is_user_defined(false)
-    {}
-
-    float GetScaledSpringiness()
+    float GetScaledSpringiness() const
     {
         return springiness * scale.springiness;
     }
 
-    float GetScaledDamping()
+    float GetScaledDamping() const
     {
         return damping_constant * scale.damping_constant;
     }
 
-    float GetScaledBreakingThreshold()
+    float GetScaledBreakingThreshold() const
     {
         return breaking_threshold * scale.breaking_threshold_constant;
     }
 
-    inline float GetScaledDeformThreshold() const
+    float GetScaledDeformThreshold() const
     {
         return deformation_threshold * scale.deformation_threshold_constant;
     }
 
-    float springiness;
-    float damping_constant;
-    float deformation_threshold;
-    float breaking_threshold;
-    float visual_beam_diameter;
-    std::string beam_material_name;
-    float plastic_deform_coef;
-    bool enable_advanced_deformation; //!< Informs whether "enable_advanced_deformation" directive preceded these defaults.
-    bool is_plastic_deform_coef_user_defined;
-    bool is_user_defined; //!< Informs whether these data were read from "set_beam_defaults" directive or filled in by the parser on startup.
+    // NOTE: -1.f is 'empty value'; replaced by constant in parser.
+
+    float springiness{ -1.f };
+    float damping_constant{ -1.f };
+    float deformation_threshold{ -1.f };
+    float breaking_threshold{ -1.f };
+    float visual_beam_diameter{ -1.f };
+    std::string beam_material_name{ "tracks/beam" };
+    float plastic_deform_coef{ 0.f };
+    bool enable_advanced_deformation{ false }; //!< Informs whether "enable_advanced_deformation" directive preceded these defaults.
+    bool is_plastic_deform_coef_user_defined{ false };
+    bool is_user_defined{ false }; //!< Informs whether these data were read from "set_beam_defaults" directive or filled in by the parser on startup.
     BeamDefaultsScale scale;
 };
 
@@ -103,13 +86,12 @@ struct MinimassPreset
         OPTION_l_SKIP_LOADED = 'l'  //!< Only apply minimum mass to nodes without "L" option.
     };
 
-    MinimassPreset() : min_mass(DEFAULT_MINIMASS)
-    {}
+    MinimassPreset() = default;
 
     explicit MinimassPreset(float m) : min_mass(m)
     {}
 
-    float min_mass; //!< minimum node mass in Kg
+    float min_mass{ DEFAULT_MINIMASS }; //!< minimum node mass in Kg
 };
 
 /* -------------------------------------------------------------------------- */
@@ -118,13 +100,8 @@ struct MinimassPreset
 
 struct Globals
 {
-    Globals() :
-        dry_mass(0), /* The default */
-        cargo_mass(0) /* The default */
-    {}
-
-    float dry_mass;
-    float cargo_mass;
+    float dry_mass{ 0 };
+    float cargo_mass{ 0 };
     std::string material_name;
 };
 
@@ -135,18 +112,11 @@ struct Globals
 
 struct Beam
 {
-    Beam() :
-        options(0),
-        extension_break_limit(0), /* This is default */
-        has_extension_break_limit(false),
-        detacher_group(0) /* 0 = Default detacher group */
-    {}
-
     Node::Ref nodes[2];
-    unsigned int options; //!< Bit flags
-    float extension_break_limit;
-    bool has_extension_break_limit;
-    int detacher_group;
+    unsigned int options{  0 }; //!< Bit flags
+    float extension_break_limit{ 0 };
+    bool has_extension_break_limit{ false };
+    int detacher_group{ 0 };
     std::shared_ptr<BeamDefaults> defaults;
 };
 
@@ -170,17 +140,12 @@ struct CollisionBox
 
 struct Flexbody
 {
-    Flexbody() :
-        offset(glm::vec3(0)),
-        rotation(glm::vec3(0))
-    {
-    }
 
     Node::Ref reference_node;
     Node::Ref x_axis_node;
     Node::Ref y_axis_node;
-    glm::vec3 offset;
-    glm::vec3 rotation;
+    glm::vec3 offset{ 0 };
+    glm::vec3 rotation{ 0 };
     std::string mesh_name;
     //std::list<Animation> animations;
     std::vector<Node::Range> node_list_to_import; //!< Node ranges are disallowed in fileformatversion >=450
@@ -194,12 +159,8 @@ struct Flexbody
 
 struct NodeCollision
 {
-    NodeCollision() :
-        radius(0)
-    {}
-
     Node::Ref node;
-    float radius;
+    float radius{ 0 };
 };
 
 /* -------------------------------------------------------------------------- */
@@ -208,35 +169,20 @@ struct NodeCollision
 
 struct Cab
 {
-    Cab() :
-        options(0)
-    {}
-
-
-
     Node::Ref nodes[3];
-    unsigned int options;
+    unsigned int options{ 0 };
 };
 
 struct Texcoord
 {
-    Texcoord() :
-        u(0),
-        v(0)
-    {}
-
     Node::Ref node;
-    float u;
-    float v;
+    float u{ 0 };
+    float v{ 0 };
 };
 
 struct Submesh
 {
-    Submesh() :
-        backmesh(false)
-    {}
-
-    bool backmesh;
+    bool backmesh{ false };
     std::vector<Texcoord> texcoords;
     std::vector<Cab> cab_triangles;
 };
@@ -249,7 +195,7 @@ struct File
     class Module
     {
     public:
-        Module(std::string const& name);
+        explicit Module(std::string const& name);
 
         std::string name;
 
@@ -483,17 +429,17 @@ struct File
 
     File();
 
-    unsigned int file_format_version;
-    bool enable_advanced_deformation;
+    unsigned int file_format_version{}; // Default = unset
+    bool enable_advanced_deformation{ false };
     std::string name;
-    float collision_range;
+    float collision_range{};
 
     // File hash
     std::string hash;
 
     // Vehicle modules(caled 'sections' in truckfile doc)
     std::shared_ptr<Module> root_module; //!< Required to exist. `shared_ptr` is used for unified handling with other modules.
-    std::map< std::string, std::shared_ptr<Module> > user_modules;
+    std::unordered_map< std::string, std::shared_ptr<Module> > user_modules;
 
 
 

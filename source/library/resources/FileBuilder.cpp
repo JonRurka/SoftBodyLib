@@ -4,15 +4,15 @@
 void FileBuilder::SetGlobals(
 	float dry_mass,
 	float cargo_mass,
-	std::string material_name)
+	std::string const& material_name)
 {
-	Globals globals;
-	globals.dry_mass = dry_mass;
-	globals.cargo_mass = cargo_mass;
-	globals.material_name = material_name;
+	Globals globs;
+    globs.dry_mass = dry_mass;
+    globs.cargo_mass = cargo_mass;
+    globs.material_name = material_name;
 
 
-	file.root_module->globals = std::shared_ptr<Globals>(new Globals(globals));
+	file.root_module->globals = std::make_shared<Globals>(globs);
 
 	lineCounter++;
 }
@@ -61,7 +61,7 @@ void FileBuilder::SetBeamDefaults(
 	float deformation_threshold,
 	float breaking_threshold,
 	float visual_beam_diameter,
-	std::string beam_material_name,
+	std::string const& beam_material_name,
 	float plastic_deform_coef,
 	bool enable_advanced_deformation, //!< Informs whether "enable_advanced_deformation" directive preceded these defaults.
 	bool is_plastic_deform_coef_user_defined,
@@ -88,21 +88,17 @@ void FileBuilder::SetBeamDefaults(
 
 void FileBuilder::SetMinimassPreset(float min_mass)
 {
-	MinimassPreset minimass;
-	minimass.min_mass = min_mass;
-
-	cur_MinimassPreset = minimass;
-
+	cur_MinimassPreset = MinimassPreset{ min_mass };
 	lineCounter++;
 }
 
 // TODO: Module support
-void FileBuilder::AddNode(std::string id, float x, float y, float z, bool loadWeight, float weight)
+void FileBuilder::AddNode(std::string const& id, float x, float y, float z, bool loadWeight, float weight)
 {
 	Node node;
-	node.node_defaults = std::shared_ptr<NodeDefaults>(new NodeDefaults(cur_nodeDefaults));
-	node.beam_defaults = std::shared_ptr<BeamDefaults>(new BeamDefaults(cur_beamDefaults));
-	node.node_minimass = std::shared_ptr<MinimassPreset>(new MinimassPreset(cur_MinimassPreset));
+	node.node_defaults = std::make_shared<NodeDefaults>(cur_nodeDefaults);
+	node.beam_defaults = std::make_shared<BeamDefaults>(cur_beamDefaults);
+	node.node_minimass = std::make_shared<MinimassPreset>(cur_MinimassPreset);
 	node.detacher_group = 0; // TODO
 
 	node.position.x = x;
@@ -123,7 +119,7 @@ void FileBuilder::AddNode(std::string id, float x, float y, float z, bool loadWe
 void FileBuilder::AddBeam(std::string const& node_1, std::string const& node_2, bool canBreak, float breakLimit)
 {
 	Beam beam;
-	beam.defaults = std::shared_ptr<BeamDefaults>(new BeamDefaults(cur_beamDefaults));
+	beam.defaults = std::make_shared<BeamDefaults>(cur_beamDefaults);
 	beam.detacher_group = 0; // TODO
 
 	beam.nodes[0] = getNodeRef(node_1);
@@ -144,7 +140,7 @@ void FileBuilder::AddBeam(std::string const& node_1, std::string const& node_2, 
 }
 
 void FileBuilder::NewSubmesh() {
-	cur_Submesh = std::shared_ptr<Submesh>(new Submesh());
+	cur_Submesh = std::make_shared<Submesh>();
 	lineCounter++;
 }
 

@@ -9,7 +9,7 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 if (UNIX)
-    set(CMAKE_CXX_FLAGS -pthread)
+    add_compile_options(-pthread -fPIC)
 endif ()
 
 add_subdirectory(source)
