@@ -5,9 +5,6 @@
 class FileBuilder
 {
 public:
-	FileBuilder() : lineCounter(1)
-	{}
-
 	File file;
 	NodeDefaults cur_nodeDefaults;
 	BeamDefaultsScale cur_beamDefaultsScale;
@@ -19,7 +16,7 @@ public:
 	void SetGlobals(
 		float dry_mass,
 		float cargo_mass,
-		std::string material_name);
+		std::string const& material_name);
 
 	void SetNodeDefaults(
 		float load_weight,
@@ -40,7 +37,7 @@ public:
 		float deformation_threshold,
 		float breaking_threshold,
 		float visual_beam_diameter,
-		std::string beam_material_name,
+		std::string const& beam_material_name,
 		float plastic_deform_coef,
 		bool enable_advanced_deformation, //!< Informs whether "enable_advanced_deformation" directive preceded these defaults.
 		bool is_plastic_deform_coef_user_defined,
@@ -50,7 +47,7 @@ public:
 	void SetMinimassPreset(float min_mass);
 
 	// TODO: Module support
-	void AddNode(std::string id, float x, float y, float z, bool loadWeight, float weight);
+	void AddNode(std::string const& id, float x, float y, float z, bool loadWeight, float weight);
 
 	void AddBeam(std::string const& node_1, std::string const& node_2, bool canBreak, float breakLimit);
 
@@ -61,7 +58,7 @@ public:
 	void AddCab(std::string const& n1, std::string const& n2, std::string const& n3, int option);
 
 private:
-	int lineCounter;
+	int lineCounter{ 1 };
 
 	Node::Ref getNodeRef(std::string const& node_id)
 	{

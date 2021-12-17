@@ -4,9 +4,9 @@ using namespace SoftBodyLib;
 using namespace SoftBodyLib::Util;
 
 // some gcc fixes
-#ifdef LINUX_BUILD
+#ifdef __linux__
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif //LINUX_BUILD
+#endif //__linux__
 
 //hash function SBOX
 //from http://home.comcast.net/~bretm/hash/10.html

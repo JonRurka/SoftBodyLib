@@ -12,7 +12,7 @@
 #include <map>
 #include <list>
 #include <utility>
-#include <stdlib.h>
+#include <cstdlib>
 #include <ostream>
 #include <sstream>
 #include <array>
@@ -22,17 +22,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define WINDOWS_BUILD
-
-
-#ifdef WINDOWS_BUILD
-
+#if defined(WIN32) || defined(WIN64)
 #include <Windows.h>
 #define WIN32_LEAN_AND_MEAN
-
-#else 
-
-#define LINUX_BUILD
-
-
 #endif

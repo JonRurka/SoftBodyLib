@@ -1,4 +1,5 @@
 #include "RigDef_Node.h"
+#include "RigDef_File.h"
 
 Node::Id::Id():
 	m_id_num(0),
