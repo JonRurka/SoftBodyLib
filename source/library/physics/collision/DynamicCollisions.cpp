@@ -54,7 +54,7 @@ static bool SoftBodyLib::BackfaceCollisionTest(const float distance,
  * @param local Point in triangle local coordinates.
  * @param margin Range within which a point is considered to be close enough to the triangle plane.
  */
-static bool SoftBodyLib::InsideTriangleTest(const CartesianToTriangleTransform::TriangleCoord& local, const float margin)
+bool SoftBodyLib::InsideTriangleTest(const CartesianToTriangleTransform::TriangleCoord& local, const float margin)
 {
     const auto coord = local.barycentric;
     const auto distance = local.distance;

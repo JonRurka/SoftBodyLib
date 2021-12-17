@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ForwardDeclarations.h"
-//#include "../ForwardDeclarations.h"
 
+#include "BitFlags.h"
 #include "Math.h"
 #include "Plane.h"
 #include "Sphere.h"

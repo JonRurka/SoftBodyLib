@@ -102,7 +102,7 @@ public:
      * \f$\gamma\f$ can be immediately calculated from known values \f$\alpha\f$ and \f$\beta\f$ because
      * \f$\alpha + \beta + \gamma = 1\f$ always holds.
      */
-    TriangleCoord operator() (const glm::vec3&p) const
+    TriangleCoord operator() (const glm::vec3& p) const
     {
         // lazy initialization of transformation matrix
         if (!m_initialized) {
@@ -124,9 +124,12 @@ private:
         const glm::vec3 n = m_triangle.normal();
         
         // construct and invert matrix
-        auto l_matrix = glm::mat3x3( u[0], v[0], n[0],
+        /*auto l_matrix = glm::mat3x3(u[0], v[0], n[0],
                                      u[1], v[1], n[1],
-                                     u[2], v[2], n[2] );
+                                     u[2], v[2], n[2] );*/
+        auto l_matrix = glm::mat3x3(u[0], u[1], u[2],
+                                    v[0], v[1], v[2],
+                                    n[0], n[1], n[2]);
         m_matrix = glm::inverse(l_matrix);
     }
 

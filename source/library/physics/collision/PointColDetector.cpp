@@ -5,8 +5,7 @@ using namespace SoftBodyLib;
 
 void PointColDetector::UpdateIntraPoint(bool contactables) 
 {
-	// TODO:
-	int contacters_size = 0;// contactables ? m_actor ? m_actor->ar_num_contactable_nodes : m_actor->ar_num_contacters;
+	int contacters_size = contactables ? m_actor->ar_num_contactable_nodes : m_actor->ar_num_contacters;
 
 	if (contacters_size != m_object_list_size)
 	{
@@ -20,52 +19,47 @@ void PointColDetector::UpdateIntraPoint(bool contactables)
 	m_kdtree[0].end = -m_object_list_size;
 }
 
-
 void PointColDetector::UpdateInterPoint(bool ignorestate) 
 {
-	m_linked_actors = {};//m_actor->getAllLinkedActors(); TODO
+	m_linked_actors = m_actor->getAllLinkedActors(); 
 
-	std::vector<Actor*> allActors; // tmp TODO
+	std::vector<Actor*> allActors; // TODO
 
 	int contacters_size = 0;
 	std::vector<Actor*> collision_partners;
 	for (auto actor : allActors)
 	{
-		// TODO
-		Util::AxisAlignedBox bounding_box; // = m_actor->ar_bounding_box;
-		Util::AxisAlignedBox o_bounding_box; // = actor->ar_bounding_box;
+		Util::AxisAlignedBox bounding_box= m_actor->ar_bounding_box;
+		Util::AxisAlignedBox o_bounding_box = actor->ar_bounding_box;
 
-		// TODO
-		bool o_actor_update_physics = true; //actor->ar_update_physics
+		bool o_actor_update_physics = actor->ar_update_physics;
 		if (actor != m_actor && (ignorestate || o_actor_update_physics) &&
 			bounding_box.intersects(o_bounding_box))
 		{
 			collision_partners.push_back(actor);
 			bool is_linked = std::find(m_linked_actors.begin(), m_linked_actors.end(), actor) != m_linked_actors.end();
-			contacters_size += 0;// is_linked ? actor->ar_num_contacters : actor->ar_num_contactable_nodes; TODO
+			contacters_size += is_linked ? actor->ar_num_contacters : actor->ar_num_contactable_nodes;
 			if (glm::distance2(m_actor->ar_nodes[0].Velocity, actor->ar_nodes[0].Velocity) > 16)
 			{
-				int num_collcabs = 0;// m_actor->ar_num_collcabs; TODO
+				int num_collcabs = m_actor->ar_num_collcabs;
 				for (int i = 0; i < num_collcabs; i++)
 				{
-					// TODO
-					//m_actor->ar_intra_collcabrate[i].rate = 0;
-					//m_actor->ar_inter_collcabrate[i].rate = 0;
+					m_actor->ar_intra_collcabrate[i].rate = 0;
+					m_actor->ar_inter_collcabrate[i].rate = 0;
 				}
 
-				int o_num_collcabs = 0;// actor->ar_num_collcabs; TODO
+				int o_num_collcabs = actor->ar_num_collcabs;
 				for (int i = 0; i < num_collcabs; i++)
 				{
-					// TODO
-					//actor->ar_intra_collcabrate[i].rate = 0;
-					//actor->ar_inter_collcabrate[i].rate = 0;
+					actor->ar_intra_collcabrate[i].rate = 0;
+					actor->ar_inter_collcabrate[i].rate = 0;
 				}
 			}
 		}
 	}
 
 
-	//m_actor->ar_collision_relevant = (contacters_size > 0); TODO
+	m_actor->ar_collision_relevant = (contacters_size > 0);
 
 	if (collision_partners != m_collision_partners || contacters_size != m_object_list_size)
 	{

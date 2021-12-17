@@ -6,10 +6,14 @@ set(${module}_headers
     Physics.h
     SimConstants.h
     SimData.h
+	ActorManager.h
+	ActorSpawner.h
 )
 
 set(${module}_sources
     Actor.cpp
+	ActorManager.cpp
+	ActorSpawner.cpp
 )
 
 add_subdirectory(collision)

@@ -14,6 +14,7 @@
 #include <utility>
 #include <stdlib.h>
 #include <ostream>
+#include <sstream>
 #include <array>
 
 #include <glm/glm.hpp>
@@ -21,6 +22,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define WINDOWS_BUILD
 
 
 #ifdef WINDOWS_BUILD

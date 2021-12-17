@@ -113,7 +113,7 @@ namespace SoftBodyLib {
         SpecialBeam     bounded;
         BeamType        bm_type;
         bool            bm_inter_actor;        //!< in case p2 is on another actor
-        //Actor* bm_locked_actor;       //!< in case p2 is on another actor
+        Actor* bm_locked_actor;       //!< in case p2 is on another actor
         bool            bm_disabled;
         bool            bm_broken;
 
@@ -238,5 +238,23 @@ namespace SoftBodyLib {
         float fx_particle_timedelta;    //!< delta for particle animation
         float fx_particle_velo_factor;  //!< velocity factor
         float fx_particle_ttl;
+    };
+
+
+    struct ActorSpawnRequest {
+        typedef unsigned int Origin;
+
+        enum class DefaultOrigin : Origin //!< Enables special processing
+        {
+            UNKNOWN = 0,
+            DEFAULT = 1,
+        };
+
+
+        glm::vec3           asr_position = glm::vec3(0);
+        glm::quat           asr_rotation = glm::quat(0, 0, 0, 0);
+        collision_box_t*    asr_spawnbox = nullptr;
+        Origin              asr_origin = (Origin)DefaultOrigin::UNKNOWN;
+
     };
 }

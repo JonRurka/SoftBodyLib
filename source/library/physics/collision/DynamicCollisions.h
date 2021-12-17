@@ -9,7 +9,7 @@ namespace SoftBodyLib {
         const std::vector<int>& neighbour_node_ids,
         const node_t nodes[]);
 
-    static bool InsideTriangleTest(const CartesianToTriangleTransform::TriangleCoord& local, const float margin);
+    bool InsideTriangleTest(const CartesianToTriangleTransform::TriangleCoord& local, const float margin);
 
     void ResolveCollisionForces(const float penetration_depth,
         node_t& hitnode, node_t& na, node_t& nb, node_t& no,

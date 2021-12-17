@@ -8,6 +8,7 @@ set(${module}_headers
     Ray.h
     Sphere.h
     ZeroedMemoryAllocator.h
+	BitFlags.h
 )
 
 set(${module}_sources
