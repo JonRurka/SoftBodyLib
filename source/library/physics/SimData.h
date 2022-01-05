@@ -256,5 +256,7 @@ namespace SoftBodyLib {
         collision_box_t*    asr_spawnbox = nullptr;
         Origin              asr_origin = (Origin)DefaultOrigin::UNKNOWN;
 
+        bool                asr_free_position = false;   //!< Disables the automatic spawn position adjustment
+        bool                asr_terrn_machine = false;   //!< This is a fixed machinery
     };
 }

@@ -6,10 +6,24 @@ namespace SoftBodyLib {
 
 
 	class Actor;
+	class ActorManager;
+	class ActorSpawner;
+
+	struct CabTexcoord;
+	struct CabSubmesh;
+
+	class  FlexBody;
+	class  FlexBodyFileIO;
+	struct FlexBodyCacheData;
+	class  FlexFactory;
+	class  FlexMeshWheel;
+	class  FlexObj;
 
 	class PointColDetector;
 
 	class ZeroedMemoryAllocator;
+
+	
 	
 	// SimData.h
 	struct node_t;

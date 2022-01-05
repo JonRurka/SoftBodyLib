@@ -17,6 +17,9 @@ set(${module}_sources
 )
 
 add_subdirectory(collision)
+add_subdirectory(flex)
 
 add_library(${module} STATIC ${${module}_headers} ${${module}_sources})
+
 target_link_libraries(${module} PhysicsCollision)
+target_link_libraries(${module} PhysicsFlex)
