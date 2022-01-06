@@ -2,6 +2,7 @@
 
 #include "Physics.h"
 #include "resources/resources.h"
+#include "terrain/terrain.h"
 
 namespace SoftBodyLib {
 	/// Builds and manages softbody actors (physics on background thread, networking)
@@ -28,7 +29,8 @@ namespace SoftBodyLib {
 
 		void           UpdateSleepingState(Actor* player_actor, float dt);
 
-
+		void SetTerrainManager(TerrainManager_Base* terr) { terrain = terr; }
+		TerrainManager_Base* GetTerrainManager() { return terrain; }
 
 	private:
 
@@ -48,5 +50,7 @@ namespace SoftBodyLib {
 		float               m_simulation_time = 0.f;   //!< Amount of time the physics simulation is going to be advanced
 		bool                m_simulation_paused = false;
 		float               m_total_sim_time = 0.f;
+
+		TerrainManager_Base* terrain;
 	};
 }

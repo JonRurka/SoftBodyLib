@@ -441,6 +441,6 @@ struct File
     std::shared_ptr<Module> root_module; //!< Required to exist. `shared_ptr` is used for unified handling with other modules.
     std::unordered_map< std::string, std::shared_ptr<Module> > user_modules;
 
-
+    bool minimass_skip_loaded_nodes; //!< Only apply minimum mass to nodes without "L" option. Global effect.
 
 };

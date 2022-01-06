@@ -2,6 +2,7 @@
 
 #include "Physics.h"
 #include "resources/resources.h"
+#include "terrain/terrain.h"
 
 
 #ifdef ZERO_MEM_ALLOC
@@ -30,6 +31,7 @@ namespace SoftBodyLib {
             , unsigned int vector_index
             , std::shared_ptr<File> def
             , ActorSpawnRequest rq
+            , TerrainManager_Base* ter
         );
 
         ~Actor();
@@ -42,6 +44,9 @@ namespace SoftBodyLib {
         float             getRotation();
         glm::vec3         getDirection();
         glm::vec3         getPosition();
+
+        float             getMinHeight(bool skip_virtual_nodes = true);
+        float             getMaxHeight(bool skip_virtual_nodes = true);
 
 
         std::vector<Actor*> getAllLinkedActors() { return m_linked_actors; }; //!< Returns a list of all connected (hooked) actors
@@ -66,12 +71,13 @@ namespace SoftBodyLib {
         AxisAlignedBox      ar_predicted_bounding_box;
 
         std::vector<std::vector<int>>  ar_node_to_node_connections;
+        std::vector<std::vector<int>>  ar_node_to_beam_connections;
         std::vector<AxisAlignedBox>  ar_collision_bounding_boxes; //!< smart bounding boxes, used for determining the state of an actor (every box surrounds only a subset of nodes)
         std::vector<AxisAlignedBox>  ar_predicted_coll_bounding_boxes;
 
-        float                     ar_initial_total_mass;
+        float                      ar_initial_total_mass;
 
-        std::vector<float>        ar_initial_node_masses;
+        std::vector<float>         ar_initial_node_masses;
         std::vector<glm::vec3>     ar_initial_node_positions;
         std::vector<std::pair<float, float>> ar_initial_beam_defaults;
 
@@ -117,8 +123,12 @@ namespace SoftBodyLib {
 
         std::vector<Actor*>  m_linked_actors;           //!< Sim state; other actors linked using 'hooks'
 
+        glm::vec3     m_avg_node_position;          //!< average node position
+        glm::vec3     m_avg_node_position_prev;
+
         PointColDetector* m_inter_point_col_detector;   //!< Physics
         PointColDetector* m_intra_point_col_detector;   //!< Physics
+        TerrainManager_Base* terrain;
 
 
         float             m_total_mass;            //!< Physics state; total mass in Kg

@@ -7,8 +7,6 @@
 #include "../../utils/ZeroedMemoryAllocator.h"
 #endif
 
-
-
 namespace SoftBodyLib {
 
     using namespace Util;
@@ -24,7 +22,7 @@ namespace SoftBodyLib {
         bool enabled;
     };
 
-    class Collisions 
+    class Collisions  : public Collisions_Base
 #ifdef ZERO_MEM_ALLOC
         : public ZeroedMemoryAllocator 
 #endif
@@ -202,5 +200,5 @@ namespace SoftBodyLib {
              const glm::quat& orient = glm::quat(1, 0, 0, 0), const glm::vec3& scale = glm::vec3(1, 1, 1));
     };
 
-    glm::vec3 primitiveCollision(node_t* node, glm::vec3 velocity, float mass, glm::vec3 normal, float dt, ground_model_t* gm, float penetration = 0);
+    
 }

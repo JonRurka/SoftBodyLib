@@ -150,7 +150,7 @@ void ActorManager::SetupActor(Actor* actor, ActorSpawnRequest rq, std::shared_pt
 
 Actor* ActorManager::CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<File> def)
 {
-	Actor* actor = new Actor(m_actor_counter++, static_cast<int>(m_actors.size()), def, rq);
+	Actor* actor = new Actor(m_actor_counter++, static_cast<int>(m_actors.size()), def, rq, terrain);
 	//actor->setUsedSkin(rq.asr_skin_entry);
 
 	this->SetupActor(actor, rq, def);

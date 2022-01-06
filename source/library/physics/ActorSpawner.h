@@ -2,6 +2,7 @@
 
 #include "Physics.h"
 #include "resources/resources.h"
+#include "terrain/terrain.h"
 
 
 namespace SoftBodyLib {

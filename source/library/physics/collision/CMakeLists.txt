@@ -2,6 +2,7 @@ set(module "PhysicsCollision")
 
 set(${module}_headers
     CartesianToTriangleTransform.h
+	Collisions_Base.h
     Collisions.h
     DynamicCollisions.h
     PointColDetector.h

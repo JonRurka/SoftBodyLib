@@ -16,6 +16,7 @@
 #include "collision/CartesianToTriangleTransform.h"
 #include "collision/PointColDetector.h"
 #include "collision/DynamicCollisions.h"
+#include "collision/Collisions_Base.h"
 #include "collision/Collisions.h"
 
 #include "Actor.h"
