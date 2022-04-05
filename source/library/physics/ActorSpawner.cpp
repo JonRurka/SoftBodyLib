@@ -3,7 +3,7 @@
 using namespace SoftBodyLib;
 
 #define PROCESS_SECTION_IN_ANY_MODULE(_FIELD_, _FUNCTION_)			    \
-{                                                                       \                                \
+{                                                                       \
     for (auto& m: m_selected_modules)                                   \
     {                                                                   \
         if (m->_FIELD_ != nullptr)                                      \
@@ -59,6 +59,9 @@ Actor* SoftBodyLib::ActorSpawner::SpawnActor()
 	InitializeRig();
 
 	m_actor->ar_collision_range = m_file->collision_range;
+
+	// Section 'gobals' in any module
+	PROCESS_SECTION_IN_ANY_MODULE(globals, ProcessGlobals);
 
 	// Sections 'nodes' & 'nodes2'
 	PROCESS_SECTION_IN_ALL_MODULES(nodes, ProcessNode);
@@ -131,6 +134,18 @@ void SoftBodyLib::ActorSpawner::InitializeRig()
 	//m_flex_factory.CheckAndLoadFlexbodyCache();
 
 
+}
+
+void ActorSpawner::ProcessGlobals(Globals& def)
+{
+	m_actor->m_dry_mass = def.dry_mass;
+	m_actor->m_load_mass = def.cargo_mass;
+
+	// NOTE: Don't do any material pre-processing here; it'll be done on actual entities (via `SetupNewEntity()`).
+	if (!def.material_name.empty())
+	{
+		// TODO: m_cab_material_name = def.material_name;
+	}
 }
 
 void ActorSpawner::ProcessNode(Node& def)
@@ -574,3 +589,6 @@ void ActorSpawner::UpdateCollcabContacterNodes()
 		}
 	}
 }
+
+
+

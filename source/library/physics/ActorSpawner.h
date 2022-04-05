@@ -62,6 +62,11 @@ namespace SoftBodyLib {
 
         void CalcMemoryRequirements(ActorMemoryRequirements& req, File::Module* module_def);
 
+        /**
+        * Section 'gobals' in any module
+        */
+        void ProcessGlobals(Globals& def);
+
         void ProcessNode(Node& def);
 
         /**

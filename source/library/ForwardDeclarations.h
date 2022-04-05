@@ -21,6 +21,10 @@ namespace SoftBodyLib {
 
 	class PointColDetector;
 
+	class SimContext;
+
+	class TerrainManager_Base;
+
 	class ZeroedMemoryAllocator;
 
 	

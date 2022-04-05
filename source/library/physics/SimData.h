@@ -42,6 +42,18 @@ namespace SoftBodyLib {
         LOCAL_SLEEPING,   //!< sleeping (local) actor
     };
 
+    enum class ActorType //!< Aka 'Driveable'
+    {
+        // DO NOT MODIFY NUMBERS - serialized into cache file, see RoR::CacheEntry
+
+        NOT_DRIVEABLE = 0,   //!< not drivable at all
+        TRUCK = 1,   //!< its a truck (or other land vehicle)
+        AIRPLANE = 2,   //!< its an airplane
+        BOAT = 3,   //!< its a boat
+        MACHINE = 4,   //!< its a machine
+        AI = 5,   //!< machine controlled by an Artificial Intelligence
+    };
+
     // --------------------------------
     // Soft body physics
 
@@ -246,8 +258,9 @@ namespace SoftBodyLib {
 
         enum class DefaultOrigin : Origin //!< Enables special processing
         {
-            UNKNOWN = 0,
-            DEFAULT = 1,
+            UNKNOWN = (Origin)0,
+            TERRN_DEF = (Origin)1,
+            DEFAULT = (Origin)2,
         };
 
 

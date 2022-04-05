@@ -4,6 +4,8 @@
 #include "resources/resources.h"
 #include "terrain/terrain.h"
 
+#define PHYSICS_DT 0.0005f // fixed dt of 0.5 ms
+
 namespace SoftBodyLib {
 	/// Builds and manages softbody actors (physics on background thread, networking)
 	class ActorManager {
@@ -28,6 +30,12 @@ namespace SoftBodyLib {
 		void           CleanUpSimulation(); //!< Call this after simulation loop finishes.
 
 		void           UpdateSleepingState(Actor* player_actor, float dt);
+
+		void           DeleteActorInternal(Actor* b); //!< Use `GameContext::DeleteActor()`
+
+
+		std::vector<Actor*> GetActors() const { return m_actors; }
+		std::vector<Actor*> GetLocalActors();
 
 		void SetTerrainManager(TerrainManager_Base* terr) { terrain = terr; }
 		TerrainManager_Base* GetTerrainManager() { return terrain; }

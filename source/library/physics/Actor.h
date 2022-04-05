@@ -31,6 +31,7 @@ namespace SoftBodyLib {
             , unsigned int vector_index
             , std::shared_ptr<File> def
             , ActorSpawnRequest rq
+            , ActorManager* mngr
             , TerrainManager_Base* ter
         );
 
@@ -57,6 +58,20 @@ namespace SoftBodyLib {
         void              calculateAveragePosition();
 
 
+        /// Virtually moves the actor at most 'direction.length()' meters towards 'direction' trying to resolve any collisions
+        /// Returns a minimal offset by which the actor needs to be moved to resolve any collisions
+        //  Both PointColDetectors need to be updated accordingly before calling th
+        glm::vec3 calculateCollisionOffset(glm::vec3 direction);
+
+        bool              Intersects(Actor* actor, glm::vec3 offset = glm::vec3(0));  //!< Slow intersection test
+        /// Moves the actor at most 'direction.length()' meters towards 'direction' to resolve any collisions
+        void              resolveCollisions(glm::vec3 direction);
+
+        /// Auto detects an ideal collision avoidance direction (front, back, left, right, up)
+        /// Then moves the actor at most 'max_distance' meters towards that direction to resolve any collisions
+        void              resolveCollisions(float max_distance, bool consider_up);
+
+        void              UpdatePhysicsOrigin();
 
         node_t*              ar_nodes;
         int                  ar_num_nodes;
@@ -104,16 +119,24 @@ namespace SoftBodyLib {
 
         float             ar_collision_range;             //!< Physics attr
 
+        ActorType         ar_driveable;                //!< Sim attr; marks vehicle type and features
+
         // Gameplay state
         ActorState        ar_state;
 
         // Bit flags
         bool ar_update_physics : 1; //!< Physics state; Should this actor be updated (locally) in the next physics step?
-
+        bool ar_disable_aerodyn_turbulent_drag : 1; //!< Physics state
         bool ar_collision_relevant : 1;      //!< Physics state;
-
+        bool ar_physics_paused : 1;   //!< Sim state
     private:
 
+        bool              CalcForcesEulerPrepare(bool doUpdate);
+        void              CalcForcesEulerCompute(bool doUpdate, int num_steps);
+        
+        void              CalcNodes();
+        void              CalcBeams(bool trigger_hooks);
+        
         void              RecalculateNodeMasses(Real total);
         void              calcNodeConnectivityGraph();
 
@@ -128,7 +151,8 @@ namespace SoftBodyLib {
 
         PointColDetector* m_inter_point_col_detector;   //!< Physics
         PointColDetector* m_intra_point_col_detector;   //!< Physics
-        TerrainManager_Base* terrain;
+        ActorManager* m_actor_manager;
+        TerrainManager_Base* m_terrain;
 
 
         float             m_total_mass;            //!< Physics state; total mass in Kg
@@ -136,6 +160,8 @@ namespace SoftBodyLib {
         float             m_load_mass;             //!< Physics attr; predefined load mass in Kg
         int               m_masscount;             //!< Physics attr; Number of nodes loaded with l option
         float             m_dry_mass;              //!< Physics attr;
+
+        bool              m_ongoing_reset;         //!< Hack to prevent position/rotation creep during interactive truck reset
     };
 
 }

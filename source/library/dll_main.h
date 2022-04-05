@@ -8,7 +8,7 @@ extern "C"
 {
 	int Exe_Test();
 
-	int Init();
+	int Init(int);
 
 
 	// TESTS

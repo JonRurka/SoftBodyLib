@@ -9,12 +9,14 @@ Actor::Actor(
 	, unsigned int vector_index
 	, std::shared_ptr<File> def
 	, ActorSpawnRequest rq
+	, ActorManager* mngr
 	, TerrainManager_Base* ter
 ) :   ar_instance_id(actor_id)
 	, ar_vector_index(vector_index) 
 	, m_avg_node_position_prev(rq.asr_position)
 	, m_avg_node_position(rq.asr_position)
-	, terrain(ter)
+	, m_actor_manager(mngr)
+	, m_terrain(ter)
 
 {
 }
@@ -156,6 +158,252 @@ void Actor::calculateAveragePosition()
 	m_avg_node_position = aposition / (float)ar_num_nodes;
 }
 
+bool SoftBodyLib::Actor::Intersects(Actor* actor, glm::vec3 offset = glm::vec3(0))
+{
+	glm::vec3 bb_min = ar_bounding_box.getMinimum() + offset;
+	glm::vec3 bb_max = ar_bounding_box.getMaximum() + offset;
+
+	AxisAlignedBox bb = AxisAlignedBox(bb_min, bb_max);
+
+	if (!bb.intersects(actor->ar_bounding_box))
+		return false;
+
+	// Test own (contactable) beams against others cabs
+	for (int i = 0; i < ar_num_beams; i++)
+	{
+		if (!(ar_beams[i].p1->nd_contacter || ar_beams[i].p1->nd_contactable) ||
+			!(ar_beams[i].p2->nd_contacter || ar_beams[i].p2->nd_contactable))
+			continue;
+
+		glm::vec3 origin = ar_beams[i].p1->AbsPosition + offset;
+		glm::vec3 target = ar_beams[i].p2->AbsPosition + offset;
+
+		Ray ray(origin, target - origin);
+
+		for (int j = 0; j < actor->ar_num_collcabs; j++)
+		{
+			int index = actor->ar_collcabs[j] * 3;
+			glm::vec3 a = actor->ar_nodes[actor->ar_collcabs[index + 0]].AbsPosition;
+			glm::vec3 b = actor->ar_nodes[actor->ar_collcabs[index + 1]].AbsPosition;
+			glm::vec3 c = actor->ar_nodes[actor->ar_collcabs[index + 2]].AbsPosition;
+
+			auto result = Math::intersects(ray, a, b, c);
+			if (result.first && result.second < 1.0f)
+			{
+				return true;
+			}
+		}
+	}
+
+	// Test own cabs against others (contactable) beams
+	for (int i = 0; i < actor->ar_num_beams; i++)
+	{
+		if (!(actor->ar_beams[i].p1->nd_contacter || actor->ar_beams[i].p1->nd_contactable) ||
+			!(actor->ar_beams[i].p2->nd_contacter || actor->ar_beams[i].p2->nd_contactable))
+			continue;
+
+		glm::vec3 origin = actor->ar_beams[i].p1->AbsPosition + offset;
+		glm::vec3 target = actor->ar_beams[i].p2->AbsPosition + offset;
+
+		Ray ray(origin, target - origin);
+
+		for (int j = 0; j < ar_num_collcabs; j++)
+		{
+			int index = ar_collcabs[j] * 3;
+			glm::vec3 a = ar_nodes[actor->ar_collcabs[index + 0]].AbsPosition;
+			glm::vec3 b = ar_nodes[actor->ar_collcabs[index + 1]].AbsPosition;
+			glm::vec3 c = ar_nodes[actor->ar_collcabs[index + 2]].AbsPosition;
+
+			auto result = Math::intersects(ray, a, b, c);
+			if (result.first && result.second < 1.0f)
+			{
+				return true;
+			}
+		}
+	}
+
+	return;
+}
+
+glm::vec3 SoftBodyLib::Actor::calculateCollisionOffset(glm::vec3 direction)
+{
+	if (direction == glm::vec3(0))
+		return glm::vec3(0);
+
+	float max_distance = glm::length(direction);
+	direction = glm::normalize(direction);
+
+	// collision displacement
+	glm::vec3 collision_offset = glm::vec3(0);
+
+	while (glm::length(collision_offset) < max_distance)
+	{
+		glm::vec3 bb_min = ar_bounding_box.getMinimum() + collision_offset;
+		glm::vec3 bb_max = ar_bounding_box.getMaximum() + collision_offset;
+		AxisAlignedBox bb = AxisAlignedBox(bb_min, bb_max);
+
+		bool collision = false;
+
+		for (auto actor : m_actor_manager->GetActors())
+		{
+			if (actor == this)
+				continue;
+			if (!bb.intersects(actor->ar_bounding_box))
+				continue;
+
+			// Test own contactables against other cabs
+			if (m_intra_point_col_detector)
+			{
+				for (int i = 0; i < actor->ar_num_collcabs; i++)
+				{
+					int tmpv = actor->ar_collcabs[i] * 3;
+
+					node_t* no = &actor->ar_nodes[actor->ar_cabs[tmpv + 0]];
+					node_t* na = &actor->ar_nodes[actor->ar_cabs[tmpv + 1]];
+					node_t* nb = &actor->ar_nodes[actor->ar_cabs[tmpv + 2]];
+
+					m_intra_point_col_detector->query(no->AbsPosition - collision_offset,
+						na->AbsPosition - collision_offset,
+						nb->AbsPosition - collision_offset,
+						actor->ar_collision_range * 3.0f);
+
+					if (collision = !m_intra_point_col_detector->hit_list.empty())
+						break;
+				}
+
+				if (collision)
+					break;
+
+			}
+
+			float proximity = 0.5f;// std::max(0.5f, std::sqrt(std::max(m_min_camera_radius, actor->m_min_camera_radius)) / 50.f);
+
+			// Test proximity of own nodes against others nodes
+			for (int i = 0; i < ar_num_nodes; i++)
+			{
+				if (!ar_nodes[i].nd_contacter && !ar_nodes[i].nd_contactable)
+					continue;
+
+				glm::vec3 query_position = ar_nodes[i].AbsPosition + collision_offset;
+				for (int j = 0; j < actor->ar_num_nodes; j++)
+				{
+					if (!actor->ar_nodes[i].nd_contacter && !actor->ar_nodes[i].nd_contactable)
+						continue;
+
+					if (collision = glm::distance2(query_position, actor->ar_nodes[j].AbsPosition) < proximity)
+						break;
+				}
+
+				if (collision)
+					break;
+			}
+
+			if (collision)
+				break;
+
+		}
+
+
+		// Test own cabs against others contacters
+		if (!collision && m_inter_point_col_detector)
+		{
+			for (int i = 0; i < ar_num_collcabs; i++)
+			{
+				int tmpv = ar_collcabs[i] * 3;
+				node_t* no = &ar_nodes[ar_cabs[tmpv + 0]];
+				node_t* na = &ar_nodes[ar_cabs[tmpv + 1]];
+				node_t* nb = &ar_nodes[ar_cabs[tmpv + 2]];
+
+				m_inter_point_col_detector->query(no->AbsPosition + collision_offset,
+					na->AbsPosition + collision_offset,
+					nb->AbsPosition + collision_offset,
+					ar_collision_range * 3.0f);
+
+				if (collision = !m_inter_point_col_detector->hit_list.empty())
+					break;
+			}
+		}
+
+		// Test beams (between contactable nodes) against cabs
+		if (!collision)
+		{
+			for (auto actor : m_actor_manager->GetActors())
+			{
+				if (actor == this)
+					continue;
+				if (collision = this->Intersects(actor, collision_offset))
+					break;
+			}
+		}
+
+
+		if (!collision)
+			break;
+		
+		collision_offset += direction * 0.05f;
+	}
+
+
+	return collision_offset;
+}
+
+void SoftBodyLib::Actor::resolveCollisions(glm::vec3 direction)
+{
+	if (m_intra_point_col_detector)
+		m_intra_point_col_detector->UpdateIntraPoint(true);
+
+	if (m_inter_point_col_detector)
+		m_inter_point_col_detector->UpdateInterPoint(true);
+
+	glm::vec3 offset = calculateCollisionOffset(direction);
+
+	if (offset == glm::vec3(0))
+		return;
+
+	offset += 0.2f * glm::normalize(glm::vec3(offset.x, 0.0f, offset.z));
+
+	resetPosition(ar_nodes[0].AbsPosition.x + offset.x, ar_nodes[0].AbsPosition.z + offset.z, false, getMinHeight() + offset.y);
+}
+
+void SoftBodyLib::Actor::resolveCollisions(float max_distance, bool consider_up)
+{
+	if (m_intra_point_col_detector)
+		m_intra_point_col_detector->UpdateIntraPoint(true);
+
+	if (m_inter_point_col_detector)
+		m_inter_point_col_detector->UpdateInterPoint(true);
+
+	glm::vec3 u = glm::vec3(0, 1, 0);
+	glm::vec3 f = glm::normalize(glm::vec3(getDirection().x, 0.0f, getDirection().z));
+	glm::vec3 l = glm::cross(u, f);
+
+	// Calculate an ideal collision avoidance direction (prefer left over right over [front / back / up])
+	glm::vec3 left = calculateCollisionOffset(+l * max_distance);
+	glm::vec3 right = calculateCollisionOffset(-l * glm::length(left));
+	glm::vec3 lateral = glm::length(left) < glm::length(right) * 1.1f ? left : right;
+
+	glm::vec3 front = calculateCollisionOffset(+f * glm::length(lateral));
+	glm::vec3 back = calculateCollisionOffset(-f * glm::length(front));
+	glm::vec3 sagittal = glm::length(front) < glm::length(back) * 1.1f ? front : back;
+
+	glm::vec3 offset = glm::length(lateral) < glm::length(sagittal) * 1.2f ? lateral : sagittal;
+
+	if (consider_up)
+	{
+		glm::vec3 up = calculateCollisionOffset(+u * glm::length(offset));
+		if (glm::length(up) * 1.2f < glm::length(offset))
+			offset = up;
+	}
+
+	if (offset == glm::vec3(0))
+		return;
+
+	// Additional 20 cm safe-guard (horizontally)
+	offset += 0.2f * glm::normalize(glm::vec3(offset.x, 0.0f, offset.z));
+
+	resetPosition(ar_nodes[0].AbsPosition.x + offset.x, ar_nodes[0].AbsPosition.z + offset.z, true, this->getMinHeight() + offset.y);
+}
+
 inline void PadBoundingBox(AxisAlignedBox& box) // Internal helper
 {
 	box.setMaximum(box.getMinimum() - BOUNDING_BOX_PADDING);
@@ -201,6 +449,19 @@ void Actor::UpdateBoundingBoxes()
 	}
 }
 
+void SoftBodyLib::Actor::UpdatePhysicsOrigin()
+{
+	if (glm::length2(ar_nodes[0].RelPosition) > 10000.0)
+	{
+		glm::vec3 offset = ar_nodes[0].RelPosition;
+		ar_origin += offset;
+		for (int i = 0; i < ar_num_nodes; i++)
+		{
+			ar_nodes[i].RelPosition -= offset;
+		}
+	}
+}
+
 void Actor::resetPosition(float px, float pz, bool setInitPosition, float miny)
 {
 	// horizontal displacement
@@ -220,7 +481,7 @@ void Actor::resetPosition(float px, float pz, bool setInitPosition, float miny)
 	{
 		if (ar_nodes[i].nd_no_ground_contact)
 			continue;
-		float terrainHeight = terrain->GetHeightAt(ar_nodes[i].AbsPosition.x, ar_nodes[i].AbsPosition.z);
+		float terrainHeight = m_terrain->GetHeightAt(ar_nodes[i].AbsPosition.x, ar_nodes[i].AbsPosition.z);
 		vertical_offset += std::max(0.0f, terrainHeight - (ar_nodes[i].AbsPosition.y + vertical_offset));
 	}
 	for (int i = 0; i < ar_num_nodes; i++)
@@ -244,7 +505,7 @@ void Actor::resetPosition(float px, float pz, bool setInitPosition, float miny)
 		while (offset < 1.0f)
 		{
 			glm::vec3 query = ar_nodes[i].AbsPosition + glm::vec3(0.0f, offset, 0.0f);
-			if (terrain->GetCollisions()->collisionCorrect(&query, false))
+			if (m_terrain->GetCollisions()->collisionCorrect(&query, false))
 			{
 				mesh_offset = offset;
 				break;
@@ -310,6 +571,103 @@ float Actor::getMaxHeight(bool skip_virtual_nodes)
 		}
 	}
 	return (!skip_virtual_nodes || height > std::numeric_limits<float>::min()) ? height : getMaxHeight();
+}
+
+bool Actor::CalcForcesEulerPrepare(bool doUpdate)
+{
+	if (m_ongoing_reset)
+		return false;
+	if (ar_physics_paused)
+		return false;
+	if (ar_state != ActorState::LOCAL_SIMULATED)
+		return false;
+
+	//if (doUpdate)
+	// todo: hook toggle
+
+	// calc hooks
+	// calc ropes
+
+	return true;
+}
+
+void SoftBodyLib::Actor::CalcForcesEulerCompute(bool doUpdate, int num_steps)
+{
+	// todo: determine order by order mapping
+
+	this->CalcNodes(); // must be done directly after the inter truck collisions are handled
+
+	this->CalcBeams(doUpdate);
+
+}
+
+void SoftBodyLib::Actor::CalcNodes()
+{
+	const glm::vec3 gravity = m_terrain->getGravity();
+	
+	for (int i = 0; i < ar_num_nodes; i++)
+	{
+		// COLLISION
+		if (!ar_nodes[i].nd_no_ground_contact)
+		{
+			glm::vec3 oripos = ar_nodes[i].AbsPosition;
+			bool contacted = m_terrain->GetCollisions()->groundCollision(&ar_nodes[i], PHYSICS_DT);
+			contacted |= m_terrain->GetCollisions()->nodeCollision(&ar_nodes[i], PHYSICS_DT, false);
+
+
+
+		}
+
+		// integration
+		if (!ar_nodes[i].nd_immovable)
+		{
+			ar_nodes[i].Velocity += ar_nodes[i].Forces / ar_nodes[i].mass * PHYSICS_DT;
+			ar_nodes[i].RelPosition += ar_nodes[i].Velocity * PHYSICS_DT;
+			ar_nodes[i].AbsPosition = ar_origin;
+			ar_nodes[i].AbsPosition += ar_nodes[i].RelPosition;
+		}
+
+		// prepare next loop (optimisation)
+		// we start forces from zero
+		// start with gravity
+		ar_nodes[i].Forces = glm::vec3(ar_nodes[i].mass * gravity.x, ar_nodes[i].mass * gravity.y, ar_nodes[i].mass * gravity.z);
+
+		float approx_speed = approx_sqrt(glm::length2(ar_nodes[i].Velocity));
+
+		// anti-explosion guard (mach 20)
+		if (approx_speed > 6860 && !m_ongoing_reset)
+		{
+			// todo: reset actor;
+			m_ongoing_reset = true;
+		}
+
+		// todo: fuse drag override
+
+		if (!ar_disable_aerodyn_turbulent_drag)
+		{
+			// add viscous drag (turbulent model)
+			float defdragxspeed = DEFAULT_DRAG * approx_speed;
+			glm::vec3 drag = -defdragxspeed * ar_nodes->Velocity;
+			// plus: turbulences
+			float maxtur = defdragxspeed * approx_speed * 0.005f;
+			drag += maxtur * glm::vec3(frand_11(), frand_11(), frand_11());
+			ar_nodes[i].Forces += drag;
+		}
+
+		// todo: water
+
+		this->UpdateBoundingBoxes();
+	}
+}
+
+void SoftBodyLib::Actor::CalcBeams(bool trigger_hooks)
+{
+
+
+
+
+
+
 }
 
 

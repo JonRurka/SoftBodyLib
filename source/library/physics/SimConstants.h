@@ -4,7 +4,7 @@ constexpr int MAX_SUBMESHES = 500;             //!< maximum number of submeshes 
 constexpr int MAX_TEXCOORDS = 3000;            //!< maximum number of texture coordinates per actor
 
 constexpr float DEFAULT_GRAVITY = -9.807f;       //!< earth gravity
-
+constexpr float DEFAULT_DRAG = 0.05f;
 
 constexpr int   MAX_CABS = 3000;            //!< maximum number of cabs per actor
 

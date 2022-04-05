@@ -7,19 +7,21 @@ using namespace SoftBodyLib;
 int lineCounter = 0;
 
 int Exe_Test() {
-	return Init();
+	int Init_return_val = Init(7);
+	return Init_return_val;
 }
 
-int Init() {
+int Init(int inpar) {
 	printf("Init\n");
 
 	//UpdateActors(0, 0.03);
 
-	auto a = glm::vec3(0, 0, 0);
-	auto b = glm::vec3(0.5, 1, 0);
-	auto c = glm::vec3(1, 0, 0);
 
-	auto t = glm::vec3(0.5, 0.5, 0);
+	glm::vec3 a = glm::vec3(0, 0, 0);
+	glm::vec3 b = glm::vec3(0.5, 1, 0);
+	glm::vec3 c = glm::vec3(1, 0, 0);
+
+	glm::vec3 t = glm::vec3(0.5, 0.5, 0);
 
 	bool didCollide = TestTrisCollision(a, b, c, t);
 
@@ -29,7 +31,7 @@ int Init() {
 }
 
 void UpdateActors(float m_dt_remainder, float m_simulation_time) {
-	float m_simulation_speed = 1;
+	/*float m_simulation_speed = 1;
 	int m_physics_steps = 0;
 
 	float dt = m_simulation_time;
@@ -56,7 +58,9 @@ void UpdateActors(float m_dt_remainder, float m_simulation_time) {
 	printf("5 m_dt_remainder: %f \n", m_dt_remainder);
 
 	dt = PHYSICS_DT * m_physics_steps;
-	printf("6 dt: %f \n", dt);
+	printf("6 dt: %f \n", dt);*/
+
+
 
 }
 

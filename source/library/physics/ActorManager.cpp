@@ -160,3 +160,93 @@ Actor* ActorManager::CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<F
 	return actor;
 }
 
+void SoftBodyLib::ActorManager::DeleteActorInternal(Actor* actor)
+{
+	if (actor == 0)
+		return;
+
+	this->SyncWithSimThread();
+
+	m_actors.erase(std::remove(m_actors.begin(), m_actors.end(), actor), m_actors.end());
+
+	delete actor;
+
+	// Update actor indices
+	for (unsigned int i = 0; i < m_actors.size(); i++)
+		m_actors[i]->ar_vector_index = i;
+}
+
+std::vector<Actor*> SoftBodyLib::ActorManager::GetLocalActors()
+{
+	std::vector<Actor*> actors;
+	for (auto actor : m_actors)
+	{
+		actors.push_back(actor);
+	}
+
+	return actors;
+}
+
+void SoftBodyLib::ActorManager::UpdateActors(Actor* player_actor)
+{
+	float dt = m_simulation_time;
+
+	// do not allow dt > 1/20
+	dt = std::min(dt, 1.0f / 20.0f);
+
+	dt *= m_simulation_speed;
+
+	dt += m_dt_remainder;
+	m_physics_steps = dt / PHYSICS_DT;
+	if (m_physics_steps == 0)
+	{
+		return;
+	}
+
+	m_dt_remainder = dt - (m_physics_steps * PHYSICS_DT);
+	dt = PHYSICS_DT * m_physics_steps;
+
+	this->SyncWithSimThread();
+
+	// this->UpdateSleepingState(player_actor, dt);
+
+	for (auto actor : m_actors)
+	{
+		// todo: engine stuff
+
+		// skid marks
+
+		// dashboard
+
+		// flare state
+	}
+
+	this->UpdatePhysicsSimulation();
+
+	m_total_sim_time += dt;
+}
+
+void SoftBodyLib::ActorManager::UpdatePhysicsSimulation()
+{
+	for (auto actor : m_actors)
+	{
+		actor->UpdatePhysicsOrigin();
+	}
+
+	for (int i = 0; i < m_physics_steps; i++)
+	{
+		for (auto actor : m_actors)
+		{
+			if (actor->ar_update_physics = actor->CalcForcesEulerPrepare(i == 0))
+			{
+				actor->CalcForcesEulerCompute(1 == 0, m_physics_steps);
+			}
+		}
+
+		for (auto actor : m_actors)
+		{
+
+		}
+	}
+}
+

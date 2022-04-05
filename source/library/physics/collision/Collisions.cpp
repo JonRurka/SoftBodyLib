@@ -88,7 +88,21 @@ Collisions::Collisions(glm::vec3 terrn_size) :
     //, landuse(0)
     , m_terrain_size(terrn_size)
 {
+    debugMode = true; // TODO:
+    for (int i = 0; i < HASH_POWER; i++)
+    {
+        hashmask = hashmask << 1;
+        hashmask++;
+    }
 
+    loadDefaultModels();
+    defaultgm = getGroundModelByString("concrete");
+    defaultgroundgm = getGroundModelByString("gravel");
+
+    if (debugMode)
+    {
+
+    }
 }
 
 Collisions::~Collisions()
@@ -98,16 +112,22 @@ Collisions::~Collisions()
 
 int Collisions::loadDefaultModels() 
 {
+    // TODO: ground model system.
+
     return 0;
 }
 
-int Collisions::loadGroundModelsConfigFile(std::string filename) {
+int Collisions::loadGroundModelsConfigFile(std::string filename) 
+{
+
+    // TODO: ground model system.
+
     return 0;
 }
 
 void Collisions::parseGroundConfig(void* cfg, std::string groundModel)
 {
-
+    // TODO: ground model system.
 }
 
 glm::vec3 Collisions::calcCollidedSide(const glm::vec3& pos, const glm::vec3& lo, const glm::vec3& hi)
@@ -136,43 +156,285 @@ ground_model_t* Collisions::getGroundModelByString(const std::string name)
 
 unsigned int Collisions::hashfunc(unsigned int cellid)
 {
-    return 0;
+    unsigned int hash = 0;
+    for (int i = 0; i < 4; i++) {
+        hash ^= sbox[((unsigned char*)&cellid)[i]];
+        hash *= 3;
+    }
+    return hash&hashmask;
 }
 
 void Collisions::hash_add(int cell_x, int cell_z, int value, float h)
 {
+    unsigned int cell_id = (cell_x << 16) + cell_z;
+    unsigned int pos = hashfunc(cell_id);
 
+    hashtable[pos].emplace_back(cell_id, value);
+    hashtable_height[pos] = std::max(hashtable_height[pos], h);
 }
 
 int Collisions::hash_find(int cell_x, int cell_z)
 {
-    return 0;
+    unsigned int cellid = (cell_x << 16) + cell_z;
+    unsigned int pos = hashfunc(cellid);
+
+    return static_cast<int>(pos);
+}
+
+inline glm::quat FromAngleAxis(Radian rot, glm::vec3 rkAxis)
+{
+    //rot = Degree(rot).valueRadians();
+
+    Radian fHalfAngle(0.5 * rot);
+    float fSin = Math::Sin(fHalfAngle);
+    Real w = Math::Cos(fHalfAngle);
+    Real x = fSin * rkAxis.x;
+    Real y = fSin * rkAxis.y;
+    Real z = fSin * rkAxis.z;
+
+    return glm::quat(w, x, y, z);
 }
 
 int Collisions::addCollisionBox(
-    /*Ogre::SceneNode* tenode, */ 
-    bool rotating, 
-    bool virt, 
+    /*Ogre::SceneNode* tenode, */
+    bool rotating,
+    bool virt,
     glm::vec3 pos,
     glm::vec3 rot,
     glm::vec3 l,
     glm::vec3 h,
     glm::vec3 sr,
-    const std::string& eventname, 
-    const std::string& instancename, 
-    bool forcecam, 
+    const std::string& eventname,
+    const std::string& instancename,
+    bool forcecam,
     glm::vec3 campos,
     glm::vec3 sc /* = Vector3::UNIT_SCALE */,
     glm::vec3 dr /* = Vector3::ZERO */,
-    CollisionEventFilter event_filter /* = EVENT_ALL */, 
+    CollisionEventFilter event_filter /* = EVENT_ALL */,
     int scripthandler /* = -1 */)
 {
-    return 0;
+    glm::quat rotation = 
+        FromAngleAxis(Degree(rot.x), glm::vec3(1, 0, 0)) *
+        FromAngleAxis(Degree(rot.y), glm::vec3(0, 1, 0)) *
+        FromAngleAxis(Degree(rot.z), glm::vec3(0, 0, 1));
+
+    glm::quat direction = 
+        FromAngleAxis(Degree(dr.x), glm::vec3(1, 0, 0)) *
+        FromAngleAxis(Degree(dr.y), glm::vec3(0, 1, 0)) *
+        FromAngleAxis(Degree(dr.z), glm::vec3(0, 0, 1));
+
+    int coll_box_index = this->GetNumCollisionBoxes();
+    collision_box_t coll_box;
+
+    coll_box.enabled = true;
+
+    // set refined box anyway
+    coll_box.relo = l * sc;
+    coll_box.rehi = h * sc;
+
+    // calculate selfcenter anyway
+    coll_box.selfcenter = coll_box.relo;
+    coll_box.selfcenter += coll_box.rehi;
+    coll_box.selfcenter *= 0.5f;
+
+    // and center too (we need it)
+    coll_box.center = pos;
+    coll_box.virt = virt;
+    coll_box.event_filter = event_filter;
+
+    // camera stuff
+    coll_box.camforced = forcecam;
+    if (forcecam)
+    {
+        coll_box.campos = coll_box.center + rotation * campos;
+    }
+
+    // first, self-rotate
+    if (rotating)
+    {
+        // we have a self-rotated block
+        coll_box.selfrotated = true;
+        coll_box.selfrot = FromAngleAxis(Degree(sr.x), glm::vec3(1, 0, 0)) *
+            FromAngleAxis(Degree(sr.y), glm::vec3(0, 1, 0)) *
+            FromAngleAxis(Degree(sr.z), glm::vec3(0, 0, 1));
+        coll_box.selfunrot = glm::inverse(coll_box.selfrot);
+    }
+    else
+    {
+        coll_box.selfrotated = false;
+    }
+
+    coll_box.eventsourcenum = -1;
+
+    if (!eventname.empty())
+    {
+        // this is event-generating
+        strcpy(eventsources[free_eventsource].boxname, eventname.c_str());
+        strcpy(eventsources[free_eventsource].instancename, instancename.c_str());
+        eventsources[free_eventsource].scripthandler = scripthandler;
+        eventsources[free_eventsource].cbox = coll_box_index;
+        eventsources[free_eventsource].direction = direction;
+        eventsources[free_eventsource].enabled = true;
+        coll_box.eventsourcenum = free_eventsource;
+        free_eventsource++;
+    }
+
+    // next, global rotate
+    if (fabs(rot.x) < 0.0001f &&
+        fabs(rot.y) < 0.0001f &&
+        fabs(rot.z) < 0.0001f)
+    {
+        // unrefined box
+        coll_box.refined = false;
+    }
+    else
+    {
+        // refined box
+        coll_box.refined = true;
+        // build rotation
+        coll_box.rot = rotation;
+        coll_box.unrot = glm::inverse(rotation);
+    }
+
+    // set raw box
+    // 8 points of a cube
+    glm::vec3 cube_points[8];
+    if (coll_box.selfrotated || coll_box.refined)
+    {
+        cube_points[0] = glm::vec3(l.x, l.y, l.z) * sc;
+        cube_points[1] = glm::vec3(h.x, l.y, l.z) * sc;
+        cube_points[2] = glm::vec3(l.x, h.y, l.z) * sc;
+        cube_points[3] = glm::vec3(h.x, h.y, l.z) * sc;
+        cube_points[4] = glm::vec3(l.x, l.y, h.z) * sc;
+        cube_points[5] = glm::vec3(h.x, l.y, h.z) * sc;
+        cube_points[6] = glm::vec3(l.x, h.y, h.z) * sc;
+        cube_points[7] = glm::vec3(h.x, h.y, h.z) * sc;
+
+        // rotate box
+        if (coll_box.selfrotated)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                cube_points[i] = cube_points[i] - coll_box.selfcenter;
+                cube_points[i] = coll_box.selfrot * cube_points[i];
+                cube_points[i] = cube_points[i] + coll_box.selfcenter;
+            }
+            if (coll_box.refined)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    cube_points[i] = coll_box.rot * cube_points[i];
+                }
+            }
+            // find min/max
+            coll_box.lo = cube_points[0];
+            coll_box.hi = cube_points[0];
+            for (int i = 1; i < 8; i++)
+            {
+                Math::makeFloor(coll_box.lo, cube_points[i]);
+                Math::makeCeil(coll_box.hi, cube_points[i]);
+            }
+            // set absolute coords
+            coll_box.lo += pos;
+            coll_box.hi += pos;
+        }
+    }
+    else
+    {
+        // unrefined box
+        coll_box.lo = pos + coll_box.relo;
+        coll_box.hi = pos + coll_box.rehi;
+        glm::vec3 d = (coll_box.rehi - coll_box.relo);
+        cube_points[0] = coll_box.relo;
+        cube_points[1] = coll_box.relo;	cube_points[1].x += d.x;
+        cube_points[2] = coll_box.relo;                          cube_points[2].y += d.y;
+        cube_points[3] = coll_box.relo; cube_points[3].x += d.x; cube_points[3].y += d.y;
+        cube_points[4] = coll_box.relo;                                                   cube_points[4].z += d.z;
+        cube_points[5] = coll_box.relo; cube_points[5].x += d.x;                          cube_points[5].z += d.z;
+        cube_points[6] = coll_box.relo; cube_points[6].y += d.y;                          cube_points[6].z += d.z;
+        cube_points[7] = coll_box.relo; cube_points[7].x += d.x; cube_points[7].y += d.y; cube_points[7].z += d.z;
+    }
+
+    // debug stuff
+
+    glm::vec3 ilo = glm::vec3(coll_box.lo / (float)CELL_SIZE);
+    glm::vec3 ihi = glm::vec3(coll_box.hi / (float)CELL_SIZE);
+
+    // clamp between 0 and MAXIMUM_CELL;
+    Math::makeCeil(ilo, glm::vec3(0.0f));
+    Math::makeFloor(ilo, glm::vec3(MAXIMUM_CELL));
+    Math::makeCeil(ihi, glm::vec3(0.0f));
+    Math::makeFloor(ihi, glm::vec3(MAXIMUM_CELL));
+
+    for (int i = ilo.x; i <= ihi.x; i++)
+    {
+        for (int j = ilo.z; j <= ihi.z; j++)
+        {
+            hash_add(i, j, coll_box_index, coll_box.hi.y);
+        }
+    }
+
+    m_collision_aab.merge(AxisAlignedBox(coll_box.lo, coll_box.hi));
+    m_collision_boxes.push_back(coll_box);
+    return coll_box_index;
 }
 
 int Collisions::addCollisionTri(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, ground_model_t* gm)
 {
-    return 0;
+    int new_tri_index = this->GetNumCollisionTris();
+
+    collision_tri_t new_tri;
+
+    new_tri.a = p1;
+    new_tri.b = p2;
+    new_tri.c = p3;
+    new_tri.gm = gm;
+    new_tri.enabled = true;
+
+    // compute transformations
+    // base construction
+    glm::vec3 bx = p2 - p1;
+    glm::vec3 by = p3 - p1;
+    glm::vec3 bz = glm::cross(bx, by);
+    glm::normalize(bz);
+
+    // coordinates change matrix
+    // TODO: new_tri.reverse.SetColumn(0, bx);
+    // TODO: new_tri.reverse.SetColumn(1, by);
+    // TODO: new_tri.reverse.SetColumn(2, bz);
+    new_tri.reverse = glm::mat3x3(bx, by, bz);
+    new_tri.forward = glm::inverse(new_tri.reverse);
+
+    // compute tri AAB
+    new_tri.aab.merge(p1);
+    new_tri.aab.merge(p2);
+    new_tri.aab.merge(p3);
+    new_tri.aab.setMinimum(new_tri.aab.getMinimum() - 0.1f);
+    new_tri.aab.setMaximum(new_tri.aab.getMaximum() + 0.1f);
+
+    // register this collision tri in the index
+    glm::vec3 ilo(new_tri.aab.getMinimum() / (float)CELL_SIZE);
+    glm::vec3 ihi(new_tri.aab.getMaximum() / (float)CELL_SIZE);
+
+    // clamp between 0 and MAXIMUM_CELL
+    Math::makeCeil(ilo, glm::vec3(0.0f));
+    Math::makeFloor(ilo, glm::vec3(MAXIMUM_CELL));
+    Math::makeCeil(ihi, glm::vec3(0.0f));
+    Math::makeFloor(ihi, glm::vec3(MAXIMUM_CELL));
+
+    for (int i = ilo.x; i <= ihi.x; i++)
+    {
+        for (int j = ilo.z; j <= ihi.z; j++)
+        {
+            hash_add(i, j, new_tri_index + hash_coll_element_t::ELEMENT_TRI_BASE_INDEX, new_tri.aab.getMaximum().y);
+        }
+    }
+
+    // TODO: debug mode
+
+    m_collision_aab.merge(new_tri.aab);
+    m_collision_tris.push_back(new_tri);
+    return new_tri_index;
 }
 
 bool Collisions::envokeScriptCallback(collision_box_t* cbox, node_t* node)
@@ -208,7 +470,172 @@ bool Collisions::permitEvent(CollisionEventFilter filter)
 // 2nd/3rd in Actor::CalcNodes()
 bool Collisions::nodeCollision(node_t* node, float dt, bool envokeScriptCallbacks)
 {
-    return false;
+    // find the correct cell
+    int refx = (int)(node->AbsPosition.x / CELL_SIZE);
+    int refz = (int)(node->AbsPosition.z / CELL_SIZE);
+    int hash = hash_find(refx, refz);
+
+    unsigned int cell_id = (refx << 16) + refz;
+
+    if (node->AbsPosition.y > hashtable_height[hash])
+        return false;
+
+    collision_tri_t* minctri = 0;
+    float minctridist = 100.0;
+    glm::vec3 minctripoint;
+
+    bool contacted = false;
+    
+    size_t num_elements = hashtable[hash].size();
+    for (size_t k = 0; k < num_elements; k++)
+    {
+        if (hashtable[hash][k].cell_id != cell_id)
+        {
+            continue;
+        }
+        else if (hashtable[hash][k].IsCollisionBox())
+        {
+            collision_box_t* cbox = &m_collision_boxes[hashtable[hash][k].element_index];
+            if (!cbox->enabled)
+                continue;
+
+            if (node->AbsPosition > cbox->lo && node->AbsPosition < cbox->hi)
+            {
+                if (cbox->refined || cbox->selfrotated)
+                {
+                    // we may have a collision, do a change of repere
+                    glm::vec3 pos = node->AbsPosition - cbox->center;
+                    if (cbox->refined)
+                    {
+                        pos = cbox->unrot * pos;
+                    }
+                    if (cbox->selfrotated)
+                    {
+                        // todo: check to make sure this makes sense
+                        pos = pos - cbox->selfcenter;
+                        pos = cbox->selfunrot * pos;
+                        pos = pos + cbox->selfcenter;
+                    }
+
+                    // now test with the inner box
+                    if (pos > cbox->relo && pos < cbox->rehi)
+                    {
+                        // event
+                    }
+                    if (cbox->camforced && !forcecam)
+                    {
+                        forcecam = true;
+                        forcecampos = cbox->campos;
+                    }
+                    if (!cbox->virt) // && !envokeScriptCallbacks
+                    {
+                        // collision, process as usual
+                        // we have a collision
+                        contacted = true;
+                        // determine which side collided
+                        float t = cbox->rehi.z - pos.z;
+                        float min = pos.z - cbox->relo.z;
+                        glm::vec3 normal = glm::vec3(0, 0, -1);
+
+                        // todo: test this
+                        if (t < min) { min = t; normal = glm::vec3(0, 0, 1); } // north
+                        t = pos.x - cbox->relo.x;
+                        if (t < min) { min = t; normal = glm::vec3(-1, 0, 0); } // west
+                        t = cbox->rehi.x - pos.x;
+                        if (t < min) { min = t; normal = glm::vec3(1, 0, 0); } // east
+                        t = pos.y - cbox->relo.y;
+                        if (t < min) { min = t; normal = glm::vec3(0, -1, 0); } // down
+                        t = cbox->rehi.y - pos.y;
+                        if (t < min) { min = t; normal = glm::vec3(0, 1, 0); } //up
+
+                        // resume repere for the normal
+                        if (cbox->selfrotated) normal = cbox->selfrot * normal;
+                        if (cbox->refined) normal = cbox->rot * normal;
+
+                        // collision boxes are always out of concrete as it seems
+                        node->Forces += primitiveCollision(node, node->Velocity, node->mass, normal, dt, defaultgm);
+                        node->nd_last_collision_gm = defaultgm;
+
+                    }
+                }
+                else
+                {
+                    // event
+
+                    if (cbox->camforced && !forcecam)
+                    {
+                        forcecam = true;
+                        forcecampos = cbox->campos;
+                    }
+                    if (!cbox->virt)
+                    {
+                        // we have a collision
+                        contacted = true;
+                        //determine which side collided
+                        float t = cbox->hi.z - node->AbsPosition.z;
+                        float min = node->AbsPosition.z - cbox->lo.z;
+                        glm::vec3 normal = glm::vec3(0, 0, -1);
+                        if (t < min) { min = t; normal = glm::vec3(0, 0, 1); }; //north
+                        t = node->AbsPosition.x - cbox->lo.x;
+                        if (t < min) { min = t; normal = glm::vec3(-1, 0, 0); }; //west
+                        t = cbox->hi.x - node->AbsPosition.x;
+                        if (t < min) { min = t; normal = glm::vec3(1, 0, 0); }; //east
+                        t = node->AbsPosition.y - cbox->lo.y;
+                        if (t < min) { min = t; normal = glm::vec3(0, -1, 0); }; //down
+                        t = cbox->hi.y - node->AbsPosition.y;
+                        if (t < min) { min = t; normal = glm::vec3(0, 1, 0); }; //up
+
+                        // resume repere for the normal
+                        if (cbox->selfrotated) normal = cbox->selfrot * normal;
+                        if (cbox->refined) normal = cbox->rot * normal;
+
+                        // collision boxes are always out of concrete as it seems
+                        node->Forces += primitiveCollision(node, node->Velocity, node->mass, normal, dt, defaultgm);
+                        node->nd_last_collision_gm = defaultgm;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // tri collision
+            const int ctri_index = hashtable[hash][k].element_index - hash_coll_element_t::ELEMENT_TRI_BASE_INDEX;
+            collision_tri_t* ctri = &m_collision_tris[ctri_index];
+            if (!ctri->enabled)
+                continue;
+            if (node->AbsPosition.y > ctri->aab.getMaximum().y || node->AbsPosition.y < ctri->aab.getMinimum().y ||
+                node->AbsPosition.x > ctri->aab.getMaximum().x || node->AbsPosition.x < ctri->aab.getMinimum().x ||
+                node->AbsPosition.z > ctri->aab.getMaximum().z || node->AbsPosition.z < ctri->aab.getMinimum().z)
+                continue;
+            // check if this tri is minimal
+            // transform
+            glm::vec3 point = ctri->forward * (node->AbsPosition - ctri->a);
+            // test if within tri collision volume (potential cause of bug!)
+            if (point.x >= 0 && point.y >= 0 && (point.x + point.y) <= 1.0 && point.z < 0 && point.z > -0.1)
+            {
+                if (-point.z < minctridist)
+                {
+                    minctri = ctri;
+                    minctridist = -point.z;
+                    minctripoint = point;
+                }
+            }
+        }
+    }
+
+    // process minctri collision
+    if (minctri)
+    {
+        // we have a contact
+        contacted = true;
+        // we need the normal
+        // resume repere for the normal
+        glm::vec3 normal = minctri->reverse * glm::vec3(0, 0, 1);
+        node->Forces += primitiveCollision(node, node->Velocity, node->mass, normal, dt, minctri->gm);
+        node->nd_last_collision_gm = minctri->gm;
+    }
+
+    return contacted;
 }
 
 glm::vec3 Collisions::getPosition(const std::string& inst, const std::string& box)
@@ -251,10 +678,6 @@ bool Collisions::groundCollision(node_t* node, float dt)
         node->nd_last_collision_gm = ogm;
         return true;
     }
-    return false;
-
-
-
     return false;
 }
 

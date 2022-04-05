@@ -3,11 +3,13 @@ project("SoftBodyLib")
 set(${PROJECT_NAME}_headers
     dll_main.h
     ForwardDeclarations.h
+	SimContext.h
     stdafx.h
 )
 
 set(${PROJECT_NAME}_sources
     dll_main.cpp
+	SimContext.cpp
 )
 
 add_subdirectory(utils)
