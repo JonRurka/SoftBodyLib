@@ -158,7 +158,7 @@ void Actor::calculateAveragePosition()
 	m_avg_node_position = aposition / (float)ar_num_nodes;
 }
 
-bool SoftBodyLib::Actor::Intersects(Actor* actor, glm::vec3 offset = glm::vec3(0))
+bool SoftBodyLib::Actor::Intersects(Actor* actor, glm::vec3 offset)
 {
 	glm::vec3 bb_min = ar_bounding_box.getMinimum() + offset;
 	glm::vec3 bb_max = ar_bounding_box.getMaximum() + offset;
@@ -222,7 +222,7 @@ bool SoftBodyLib::Actor::Intersects(Actor* actor, glm::vec3 offset = glm::vec3(0
 		}
 	}
 
-	return;
+	return false;
 }
 
 glm::vec3 SoftBodyLib::Actor::calculateCollisionOffset(glm::vec3 direction)
@@ -573,6 +573,31 @@ float Actor::getMaxHeight(bool skip_virtual_nodes)
 	return (!skip_virtual_nodes || height > std::numeric_limits<float>::min()) ? height : getMaxHeight();
 }
 
+//Returns the number of active (non bounded) beams connected to a node
+int Actor::GetNumActiveConnectedBeams(int nodeid)
+{
+	int totallivebeams = 0;
+	for (unsigned int ni = 0; ni < ar_node_to_beam_connections[nodeid].size(); ++ni)
+	{
+		if (!ar_beams[ar_node_to_beam_connections[nodeid][ni]].bm_disabled && !ar_beams[ar_node_to_beam_connections[nodeid][ni]].bounded)
+		{
+			totallivebeams++;
+		}
+	}
+	return totallivebeams;
+}
+
+void Actor::calculateLocalGForces()
+{
+	glm::vec3 cam_dir = glm::vec3(0); // todo: camera dir
+	glm::vec3 cam_roll = glm::vec3(0); // todo camera roll;
+	glm::vec3 cam_up = glm::cross(cam_dir, cam_roll);
+
+	glm::vec3 gravity = m_terrain->getGravity();
+
+	// todo
+}
+
 bool Actor::CalcForcesEulerPrepare(bool doUpdate)
 {
 	if (m_ongoing_reset)
@@ -598,7 +623,7 @@ void SoftBodyLib::Actor::CalcForcesEulerCompute(bool doUpdate, int num_steps)
 	this->CalcNodes(); // must be done directly after the inter truck collisions are handled
 
 	this->CalcBeams(doUpdate);
-
+	this->CalcCabCollisions();
 }
 
 void SoftBodyLib::Actor::CalcNodes()
@@ -613,9 +638,17 @@ void SoftBodyLib::Actor::CalcNodes()
 			glm::vec3 oripos = ar_nodes[i].AbsPosition;
 			bool contacted = m_terrain->GetCollisions()->groundCollision(&ar_nodes[i], PHYSICS_DT);
 			contacted |= m_terrain->GetCollisions()->nodeCollision(&ar_nodes[i], PHYSICS_DT, false);
+			ar_nodes[i].nd_has_ground_contact = contacted;
+			if (ar_nodes[i].nd_has_ground_contact || ar_nodes[i].nd_has_mesh_contact) // todo: investigate nd_has_mesh_contact
+			{
+				ar_last_fuzzy_ground_model = ar_nodes[i].nd_last_collision_gm;
 
-
-
+				// FROM ORIGINAL REPOSITORY:
+				// Reverts: commit/d11a88142f737528638bd357c38d717c85cebba6#diff-4003254e55aec2c60d21228f375f2a2dL1153
+				// Fixes: Gavril Omega Six sliding on ground on the simple2 spawn
+				// ar_nodes[i].AbsPosition - oripos is always zero ... dark floating point magic
+				ar_nodes[i].RelPosition += ar_nodes[i].AbsPosition - oripos;
+			}
 		}
 
 		// integration
@@ -662,12 +695,287 @@ void SoftBodyLib::Actor::CalcNodes()
 
 void SoftBodyLib::Actor::CalcBeams(bool trigger_hooks)
 {
+	for (int i = 0; i < ar_num_beams; i++)
+	{
+		if (!ar_beams[i].bm_disabled && !ar_beams[i].bm_inter_actor)
+		{
+			// Calculate beam length
+			glm::vec3 dis = ar_beams[i].p1->RelPosition - ar_beams[i].p2->RelPosition;
+
+			Real dislen = glm::length2(dis);
+			Real inverted_dislen = fast_invSqrt(dislen);
+
+			dislen *= inverted_dislen; // todo: what is this doing?
+
+			// Calculate beam's deviation from normal
+			Real difftoBeamL = dislen - ar_beams[i].L;
+
+			Real k = ar_beams[i].k;
+			Real d = ar_beams[i].d;
+
+			// Calculate beam's rate of change
+			float v = glm::dot(ar_beams[i].p1->Velocity - ar_beams[i].p2->Velocity, dis) * inverted_dislen;
+
+			// bounded SHOCK1
+			// bounded TRIGGER
+			// bounded SHOCK2
+			// bounded SHOCK3
+			// bounded SUPPORTBEAM
+			// bounded SUPPORTBEAM
+			// bounded ROPE
 
 
+			// bm_type == BEAM_HYDRO
+
+			float slen = -k * difftoBeamL - d * v;
+			ar_beams[i].stress = slen;
+
+			// Fast test for deformation
+			float len = std::abs(slen);
+			if (len > ar_beams[i].minmaxposnegstress)
+			{
+				// todo: not SHOCK1
+				// riggid beam?
+				if (ar_beams[i].bm_type == BEAM_NORMAL && k != 0.0f)
+				{
+					// Actual deformation tests
+					if (slen > ar_beams[i].maxposstress && difftoBeamL < 0.0f) // compression
+					{
+						Real yield_length = ar_beams[i].maxposstress / k;
+						Real deform = difftoBeamL + yield_length * (1.0f - ar_beams[i].plastic_coef);
+						Real Lold = ar_beams[i].L;
+						ar_beams[i].L += deform;
+						ar_beams[i].L = std::max(MIN_BEAM_LENGTH, ar_beams[i].L);
+						slen = slen - (slen - ar_beams[i].maxposstress) * 0.5f;
+						len = slen;
+						if (ar_beams[i].L > 0.0f && Lold > ar_beams[i].L)
+						{
+							ar_beams[i].maxposstress *= Lold / ar_beams[i].L;
+							ar_beams[i].minmaxposnegstress = std::min(ar_beams[i].maxposstress, -ar_beams[i].maxnegstress);
+							ar_beams[i].minmaxposnegstress = std::min(ar_beams[i].minmaxposnegstress, ar_beams[i].strength);
+						}
+
+						// For the compression case we do not remove any of the beam's
+						// strength for structure stability reasons
+						//ar_beams[i].strength += deform * k * 0.5f;
+						
+						// debug
+					}
+					else if (slen < ar_beams[i].maxnegstress && difftoBeamL > 0.0f) // expansion
+					{
+						Real yield_length = ar_beams[i].maxnegstress / k;
+						Real deform = difftoBeamL + yield_length * (1.0f - ar_beams[i].plastic_coef);
+						Real Lold = ar_beams[i].L;
+						ar_beams[i].L += deform;
+						slen = slen - (slen - ar_beams[i].maxnegstress) * 0.5f;
+						len = -slen;
+						if (Lold > 0.0f && ar_beams[i].L > Lold)
+						{
+							ar_beams[i].maxnegstress *= ar_beams[i].L / Lold;
+							ar_beams[i].minmaxposnegstress = std::min(ar_beams[i].maxposstress, -ar_beams[i].maxnegstress);
+							ar_beams[i].minmaxposnegstress = std::min(ar_beams[i].minmaxposnegstress, ar_beams[i].strength);
+						}
+						ar_beams[i].strength -= deform * k;
+						
+						//debug
+					}
+				}
+
+				// Test if the beam should break
+				if (len > ar_beams[i].strength)
+				{
+					// sound effect
+
+					//Break the beam only when it is not connected to a node
+					//which is a part of a collision triangle and has 2 "live" beams or less
+					//connected to it.
+					if (!(
+							(ar_beams[i].p1->nd_cab_node && GetNumActiveConnectedBeams(ar_beams[i].p1->pos) < 3) ||
+							(ar_beams[i].p2->nd_cab_node && GetNumActiveConnectedBeams(ar_beams[i].p2->pos) < 3)
+						))
+					{
+						slen = 0.0f;
+						ar_beams[i].bm_broken = true;
+						ar_beams[i].bm_broken = true;
+
+						// debug
+
+						// detachergroup check: beam[i] is already broken, check detacher group# == 0/default skip the check ( performance bypass for beams with default setting )
+						// only perform this check if this is a master detacher beams (positive detacher group id > 0)
+						if (ar_beams[i].detacher_group > 0)
+						{
+							if (ar_beams[i].detacher_group > 0)
+							{
+								// cycle once through the other beams
+								for (int j = 0; j < ar_num_beams; j++)
+								{
+									// beam[i] detacher group# == checked beams detacher group# -> delete & disable checked beam
+									// do this with all master(positive id) and minor(negative id) beams of this detacher group
+									if (abs(ar_beams[j].detacher_group) == ar_beams[i].detacher_group)
+									{
+										ar_beams[j].bm_broken = true;
+										ar_beams[j].bm_disabled = true;
+										// debug
+									}
+								}
+
+								// cycle once through all wheeldetachers
+							}
+						}
+
+					}
+					else
+					{
+						ar_beams[i].strength = 2.0f * ar_beams[i].minmaxposnegstress;
+					}
+
+					// something broke, check buoyant hull
 
 
+				}
 
+			}
 
+			// At last update the beam forces
+			glm::vec3 f = dis;
+			f *= (slen * inverted_dislen);
+			ar_beams[i].p1->Forces += f;
+			ar_beams[i].p2->Forces -= f;
+
+		}
+	}
 }
 
+void Actor::CalcBeamsInterActor()
+{
+	for (int i = 0; i < static_cast<int>(ar_inter_beams.size()); i++)
+	{
+		if (ar_inter_beams[i]->bm_disabled && 
+			ar_inter_beams[i]->bm_inter_actor)
+		{
+			glm::vec3 dis = ar_inter_beams[i]->p1->AbsPosition - ar_inter_beams[i]->p2->AbsPosition;
 
+			Real dislen = glm::length2(dis);
+			Real inverted_dislen = fast_invSqrt(dislen);
+
+			dislen *= inverted_dislen;
+
+			// Calculate beam's deviation from normal
+			Real difftoBeamL = dislen - ar_inter_beams[i]->L;
+
+			Real k = ar_inter_beams[i]->k;
+			Real d = ar_inter_beams[i]->d;
+
+			// ROPE
+
+			// Calculate beam's rate of change
+			glm::vec3 v = ar_inter_beams[i]->p1->Velocity - ar_inter_beams[i]->p2->Velocity;
+
+			float slen = -k * (difftoBeamL)-d * glm::dot(v, dis) * inverted_dislen;
+			ar_inter_beams[i]->stress = slen;
+
+			// Fast test for deformation
+			float len = std::abs(slen);
+			if (len > ar_inter_beams[i]->minmaxposnegstress)
+			{
+				// todo: check not shock
+				if (ar_inter_beams[i]->bm_type == BEAM_NORMAL && k != 0.0f)
+				{
+					// Actual deformation tests
+					if (slen > ar_inter_beams[i]->maxposstress && difftoBeamL < 0.0f)
+					{
+						Real yield_length = ar_inter_beams[i]->maxposstress / k;
+						Real deform = difftoBeamL + yield_length * (1.0f - ar_inter_beams[i]->plastic_coef);
+						Real Lold = ar_inter_beams[i]->L;
+						ar_inter_beams[i]->L += deform;
+						ar_inter_beams[i]->L = std::max(MIN_BEAM_LENGTH, ar_inter_beams[i]->L);
+						slen = slen - (slen - ar_inter_beams[i]->maxposstress) * 0.5f;
+						len = slen;
+						if (ar_inter_beams[i]->L > 0.0f && Lold > ar_inter_beams[i]->L)
+						{
+							ar_inter_beams[i]->maxposstress *= Lold / ar_inter_beams[i]->L;
+							ar_inter_beams[i]->minmaxposnegstress = std::min(ar_inter_beams[i]->maxposstress, -ar_inter_beams[i]->maxnegstress);
+							ar_inter_beams[i]->minmaxposnegstress = std::min(ar_inter_beams[i]->minmaxposnegstress, ar_inter_beams[i]->strength);
+						}
+
+						// For the compression case we do not remove any of the beam's
+                        // strength for structure stability reasons
+						//ar_inter_beams[i]->strength += deform * k * 0.5f;
+
+						//debug
+					}
+					else if (slen < ar_inter_beams[i]->maxnegstress && difftoBeamL > 0.0f)
+					{
+						Real yield_length = ar_inter_beams[i]->maxnegstress / k;
+						Real deform = difftoBeamL + yield_length * (1.0f - ar_inter_beams[i]->plastic_coef);
+						Real Lold = ar_inter_beams[i]->L;
+						ar_inter_beams[i]->L += deform;
+						slen = slen - (slen - ar_inter_beams[i]->maxnegstress) * 0.5f;
+						len = -slen;
+						if (Lold > 0.0f && ar_inter_beams[i]->L > Lold)
+						{
+							ar_inter_beams[i]->maxposstress *= Lold / ar_inter_beams[i]->L;
+							ar_inter_beams[i]->minmaxposnegstress = std::min(ar_inter_beams[i]->maxposstress, -ar_inter_beams[i]->maxnegstress);
+							ar_inter_beams[i]->minmaxposnegstress = std::min(ar_inter_beams[i]->minmaxposnegstress, ar_inter_beams[i]->strength);
+						}
+						ar_inter_beams[i]->strength -= deform * k;
+
+						//debug
+					}
+				}
+
+				// Test if the beam should break
+				if (len > ar_inter_beams[i]->strength)
+				{
+					// sound effect event
+
+					//Break the beam only when it is not connected to a node
+					//which is a part of a collision triangle and has 2 "live" beams or less
+					//connected to it.
+					if (!(
+						(ar_inter_beams[i]->p1->nd_cab_node && GetNumActiveConnectedBeams(ar_inter_beams[i]->p1->pos) < 3) ||
+						(ar_inter_beams[i]->p2->nd_cab_node && GetNumActiveConnectedBeams(ar_inter_beams[i]->p2->pos) < 3)
+						))
+					{
+						slen = 0.0f;
+						ar_inter_beams[i]->bm_broken = true;
+						ar_inter_beams[i]->bm_disabled = true;
+
+						// debug
+					}
+					else
+					{
+						ar_inter_beams[i]->strength = 2.0f * ar_inter_beams[i]->minmaxposnegstress;
+					}
+				}
+			}
+
+			// At last update the beam forces
+			glm::vec3 f = dis;
+			f *= (slen * inverted_dislen);
+			ar_inter_beams[i]->p1->Forces += f;
+			ar_inter_beams[i]->p2->Forces -= f;
+		}
+	}
+}
+
+void Actor::CalcCabCollisions()
+{
+	for (int i = 0; i < ar_num_nodes; i++)
+	{
+		ar_nodes[i].nd_has_mesh_contact = false;
+	}
+	if (m_intra_point_col_detector != nullptr)
+	{
+		m_intra_point_col_detector->UpdateIntraPoint();
+		ResolveIntraActorCollisions(PHYSICS_DT,
+			*m_intra_point_col_detector,
+			ar_num_collcabs,
+			ar_collcabs,
+			ar_cabs,
+			ar_intra_collcabrate,
+			ar_nodes,
+			ar_collision_range,
+			*ar_submesh_ground_model);
+	}
+}

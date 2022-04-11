@@ -5,6 +5,7 @@ constexpr int MAX_TEXCOORDS = 3000;            //!< maximum number of texture co
 
 constexpr float DEFAULT_GRAVITY = -9.807f;       //!< earth gravity
 constexpr float DEFAULT_DRAG = 0.05f;
+constexpr float MIN_BEAM_LENGTH = 0.1f;          //!< minimum beam lenght is 10 centimeters
 
 constexpr int   MAX_CABS = 3000;            //!< maximum number of cabs per actor
 

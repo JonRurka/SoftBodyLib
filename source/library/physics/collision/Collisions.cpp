@@ -499,7 +499,7 @@ bool Collisions::nodeCollision(node_t* node, float dt, bool envokeScriptCallback
             if (!cbox->enabled)
                 continue;
 
-            if (node->AbsPosition > cbox->lo && node->AbsPosition < cbox->hi)
+            if (Math::vec_gtr(node->AbsPosition, cbox->lo) && Math::vec_ltn(node->AbsPosition, cbox->hi))
             {
                 if (cbox->refined || cbox->selfrotated)
                 {
@@ -516,9 +516,9 @@ bool Collisions::nodeCollision(node_t* node, float dt, bool envokeScriptCallback
                         pos = cbox->selfunrot * pos;
                         pos = pos + cbox->selfcenter;
                     }
-
+                    
                     // now test with the inner box
-                    if (pos > cbox->relo && pos < cbox->rehi)
+                    if (Math::vec_gtr(pos, cbox->relo) && Math::vec_ltn(pos, cbox->rehi))
                     {
                         // event
                     }
@@ -611,7 +611,7 @@ bool Collisions::nodeCollision(node_t* node, float dt, bool envokeScriptCallback
             // transform
             glm::vec3 point = ctri->forward * (node->AbsPosition - ctri->a);
             // test if within tri collision volume (potential cause of bug!)
-            if (point.x >= 0 && point.y >= 0 && (point.x + point.y) <= 1.0 && point.z < 0 && point.z > -0.1)
+            if (point.x >= 0.f && point.y >= 0.f && (point.x + point.y) <= 1.0f && point.z < 0.f && point.z > -0.1f)
             {
                 if (-point.z < minctridist)
                 {

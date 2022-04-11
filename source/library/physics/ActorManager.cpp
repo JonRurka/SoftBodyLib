@@ -150,7 +150,7 @@ void ActorManager::SetupActor(Actor* actor, ActorSpawnRequest rq, std::shared_pt
 
 Actor* ActorManager::CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<File> def)
 {
-	Actor* actor = new Actor(m_actor_counter++, static_cast<int>(m_actors.size()), def, rq, terrain);
+	Actor* actor = new Actor(m_actor_counter++, static_cast<int>(m_actors.size()), def, rq, this, terrain);
 	//actor->setUsedSkin(rq.asr_skin_entry);
 
 	this->SetupActor(actor, rq, def);
@@ -158,6 +158,14 @@ Actor* ActorManager::CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<F
 	m_actors.push_back(actor);
 
 	return actor;
+}
+
+void SoftBodyLib::ActorManager::CleanUpSimulation()
+{
+}
+
+void SoftBodyLib::ActorManager::UpdateSleepingState(Actor* player_actor, float dt)
+{
 }
 
 void SoftBodyLib::ActorManager::DeleteActorInternal(Actor* actor)
@@ -224,6 +232,12 @@ void SoftBodyLib::ActorManager::UpdateActors(Actor* player_actor)
 	this->UpdatePhysicsSimulation();
 
 	m_total_sim_time += dt;
+
+	// join
+}
+
+void SoftBodyLib::ActorManager::SyncWithSimThread()
+{
 }
 
 void SoftBodyLib::ActorManager::UpdatePhysicsSimulation()
@@ -245,6 +259,46 @@ void SoftBodyLib::ActorManager::UpdatePhysicsSimulation()
 
 		for (auto actor : m_actors)
 		{
+			if (actor->ar_update_physics)
+			{
+				actor->CalcBeamsInterActor();
+			}
+		}
+
+		for (auto actor : m_actors)
+		{
+			if (actor->m_inter_point_col_detector != nullptr &&
+				actor->ar_update_physics)
+			{
+				actor->m_inter_point_col_detector->UpdateInterPoint();
+				if (actor->ar_collision_relevant)
+				{
+					ResolveInterActorCollisions(PHYSICS_DT,
+						*actor->m_inter_point_col_detector,
+						actor->ar_num_collcabs,
+						actor->ar_collcabs,
+						actor->ar_cabs,
+						actor->ar_inter_collcabrate,
+						actor->ar_nodes,
+						actor->ar_collision_range,
+						*actor->ar_submesh_ground_model);
+				}
+			}
+		}
+	}
+	for (auto actor : m_actors)
+	{
+		actor->m_ongoing_reset = false;
+		if (actor->ar_update_physics && m_physics_steps > 0)
+		{
+			// camera forces
+			
+			actor->calculateLocalGForces();
+			actor->calculateAveragePosition();
+			actor->m_avg_node_velocity = actor->m_avg_node_position - actor->m_avg_node_position_prev;
+			actor->m_avg_node_velocity /= (m_physics_steps * PHYSICS_DT);
+			actor->m_avg_node_position_prev = actor->m_avg_node_position;
+			actor->ar_top_speed = std::max(actor->ar_top_speed, glm::length(actor->ar_nodes[0].Velocity));
 
 		}
 	}

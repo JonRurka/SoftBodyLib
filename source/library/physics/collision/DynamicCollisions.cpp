@@ -104,13 +104,13 @@ void SoftBodyLib::ResolveInterActorCollisions(const float dt, PointColDetector& 
         inter_collcabrate[i].distance = 0;
 
         int tmpv = collcabs[i] * 3;
-        const auto no = &nodes[cabs[tmpv]];
+        const auto no = &nodes[cabs[tmpv + 0]];
         const auto na = &nodes[cabs[tmpv + 1]];
         const auto nb = &nodes[cabs[tmpv + 2]];
 
-        interPointCD.query(no->AbsPosition
-            , na->AbsPosition
-            , nb->AbsPosition, collrange);
+        interPointCD.query(no->AbsPosition,
+            na->AbsPosition,
+            nb->AbsPosition, collrange);
 
         if (!interPointCD.hit_list.empty())
         {
@@ -123,35 +123,34 @@ void SoftBodyLib::ResolveInterActorCollisions(const float dt, PointColDetector& 
                 const auto hit_actor = h->actor;
                 const auto hitnode = &hit_actor->ar_nodes[h->node_id];
 
-                // transform point to triangle local coordinates
+                // transform point to traingle local coordinates
                 const auto local_point = transform(hitnode->AbsPosition);
 
                 // collision test
                 const bool is_colliding = InsideTriangleTest(local_point, collrange);
                 if (is_colliding)
                 {
-                    inter_collcabrate[i].rate = 0;
-
                     const auto coord = local_point.barycentric;
                     auto distance = local_point.distance;
                     auto normal = triangle.normal();
 
-                    // adapt in case the collision is occuring on the backface of the triangle
+                    // adapt in case the collision is occuring on the back face of the triangle.
                     const auto neighbour_node_ids = hit_actor->ar_node_to_node_connections[h->node_id];
-                    const bool is_backface = BackfaceCollisionTest(distance, normal, *no, neighbour_node_ids, hit_actor->ar_nodes);
+                    const auto is_backface = BackfaceCollisionTest(distance, normal, *no, neighbour_node_ids, hit_actor->ar_nodes);
+
                     if (is_backface)
                     {
-                        // flip surface normal and distance to triangle plane
+                        // flip surface normal and distance to traingle plane
                         normal = -normal;
                         distance = -distance;
                     }
 
                     const auto penetration_depth = collrange - distance;
 
-                    const bool remote = (hit_actor->ar_state == ActorState::NETWORKED_OK);
+                    const bool remote = false;
 
-                    ResolveCollisionForces(penetration_depth, *hitnode, *na, *nb, *no, coord.alpha,
-                        coord.beta, coord.gamma, normal, dt, remote, submesh_ground_model);
+                    ResolveCollisionForces(penetration_depth, *hitnode, *na, *nb, *no,
+                        coord.alpha, coord.beta, coord.gamma, normal, dt, remote, submesh_ground_model);
 
                     hitnode->nd_last_collision_gm = &submesh_ground_model;
                     hitnode->nd_has_mesh_contact = true;
@@ -165,12 +164,16 @@ void SoftBodyLib::ResolveInterActorCollisions(const float dt, PointColDetector& 
         {
             inter_collcabrate[i].rate++;
         }
+
+
     }
 }
 
 
 
-void SoftBodyLib::ResolveIntraActorCollisions(const float dt, PointColDetector& intraPointCD,
+void SoftBodyLib::ResolveIntraActorCollisions(
+    const float dt, 
+    PointColDetector& intraPointCD,
     const int free_collcab, int collcabs[], int cabs[],
     collcab_rate_t intra_collcabrate[], node_t nodes[],
     const float collrange,
@@ -191,31 +194,30 @@ void SoftBodyLib::ResolveIntraActorCollisions(const float dt, PointColDetector& 
         }
 
         int tmpv = collcabs[i] * 3;
-        const auto no = &nodes[cabs[tmpv]];
+        const auto no = &nodes[cabs[tmpv + 0]];
         const auto na = &nodes[cabs[tmpv + 1]];
         const auto nb = &nodes[cabs[tmpv + 2]];
 
-        intraPointCD.query(no->AbsPosition
-            , na->AbsPosition
-            , nb->AbsPosition, collrange);
+        intraPointCD.query(no->AbsPosition,
+            na->AbsPosition,
+            nb->AbsPosition, collrange);
 
         bool collision = false;
 
         if (!intraPointCD.hit_list.empty())
         {
-            // setup transformation of points to triangle local coordinates
-            const Triangle triangle(na->AbsPosition, nb->AbsPosition, no->AbsPosition);
-            const CartesianToTriangleTransform transform(triangle);
+            const Triangle traingle(na->AbsPosition, nb->AbsPosition, no->AbsPosition);
+            const CartesianToTriangleTransform transform(traingle);
 
             for (auto h : intraPointCD.hit_list)
             {
                 const auto hitnode = &nodes[h->node_id];
 
-                //ignore wheel/chassis self contact
+                // ignore wheel/chassis self contact
                 if (hitnode->nd_tyre_node) continue;
                 if (no == hitnode || na == hitnode || nb == hitnode) continue;
 
-                // transform point to triangle local coordinates
+                // transform point to traingle local coordinates
                 const auto local_point = transform(hitnode->AbsPosition);
 
                 // collision test
@@ -226,7 +228,7 @@ void SoftBodyLib::ResolveIntraActorCollisions(const float dt, PointColDetector& 
 
                     const auto coord = local_point.barycentric;
                     auto distance = local_point.distance;
-                    auto normal = triangle.normal();
+                    auto normal = traingle.normal();
 
                     // adapt in case the collision is occuring on the backface of the triangle
                     if (distance < 0)
@@ -237,7 +239,6 @@ void SoftBodyLib::ResolveIntraActorCollisions(const float dt, PointColDetector& 
                     }
 
                     const auto penetration_depth = collrange - distance;
-
                     ResolveCollisionForces(penetration_depth, *hitnode, *na, *nb, *no, coord.alpha,
                         coord.beta, coord.gamma, normal, dt, false, submesh_ground_model);
                 }

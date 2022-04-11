@@ -42,6 +42,7 @@ namespace SoftBodyLib {
         // Actors (physics)
         ActorManager         m_actor_manager;
         TerrainManager_Base* g_sim_terrain;
+        Collisions_Base*     g_collisions;
         SimState             m_sim_state;
 
         Actor* m_last_spawned_actor = nullptr;     //!< Last actor spawned by user and still alive.
@@ -51,20 +52,22 @@ namespace SoftBodyLib {
 
 extern "C"
 {
-    bool SimContext_LoadTerrain(void* terrain_mgr, void* collisions, float gravity);
+    void* SimContext_New();
 
-    void SimContext_UnloadTerrain();
+    bool SimContext_LoadTerrain(void* sim_context, void* terrain_mgr, void* collisions, float gravity);
 
-    void* SimContext_SpawnActor(SoftBodyLib::ActorSpawnRequest& rq, void* file_builder);
+    void SimContext_UnloadTerrain(void* sim_context);
 
-    void  SimContext_DeleteActor(void* actor);
+    void* SimContext_SpawnActor(void* sim_context, SoftBodyLib::ActorSpawnRequest& rq, void* file_builder);
 
-    void SimContext_ModifyActor();
+    void  SimContext_DeleteActor(void* sim_context, void* actor);
 
-    void SimContext_UpdateActors();
+    void SimContext_ModifyActor(void* sim_context);
 
-    void* SimContext_GetActorManager();
+    void SimContext_UpdateActors(void* sim_context);
 
-    int SimContext_GetSimState();
+    void* SimContext_GetActorManager(void* sim_context);
+
+    int SimContext_GetSimState(void* sim_context);
 }
 

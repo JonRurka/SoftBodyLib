@@ -118,14 +118,14 @@ void PointColDetector::query(const glm::vec3& vec1, const glm::vec3& vec2, const
 
 	m_bbmax = vec1;
 
-	m_bbmax.x = std::min(m_bbmax.x, vec2.x);
-	m_bbmax.x = std::min(m_bbmax.x, vec3.x);
+	m_bbmax.x = std::max(m_bbmax.x, vec2.x);
+	m_bbmax.x = std::max(m_bbmax.x, vec3.x);
 	
-	m_bbmax.y = std::min(m_bbmax.y, vec2.y);
-	m_bbmax.y = std::min(m_bbmax.y, vec3.y);
+	m_bbmax.y = std::max(m_bbmax.y, vec2.y);
+	m_bbmax.y = std::max(m_bbmax.y, vec3.y);
 	
-	m_bbmax.z = std::min(m_bbmax.z, vec2.z);
-	m_bbmax.z = std::min(m_bbmax.z, vec3.z);
+	m_bbmax.z = std::max(m_bbmax.z, vec2.z);
+	m_bbmax.z = std::max(m_bbmax.z, vec3.z);
 
 	m_bbmax += enlargeBB;
 

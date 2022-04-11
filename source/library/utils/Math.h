@@ -168,6 +168,56 @@ namespace SoftBodyLib {
 
             ~Math();
 
+            static inline bool vec_gtr(const glm::vec4 left, const glm::vec4 right) {
+                return glm::all(glm::greaterThan(left, right));
+            }
+
+            static inline bool vec_gtr(const glm::vec3 left, const glm::vec3 right) {
+                return glm::all(glm::greaterThan(left, right));
+            }
+
+            static inline bool vec_gtr(const glm::vec2 left, const glm::vec2 right) {
+                return glm::all(glm::greaterThan(left, right));
+            }
+
+            static inline bool vec_ltn(const glm::vec4 left, const glm::vec4 right) {
+                return glm::all(glm::lessThan(left, right));
+            }
+
+            static inline bool vec_ltn(const glm::vec3 left, const glm::vec3 right) {
+                return glm::all(glm::lessThan(left, right));
+            }
+
+            static inline bool vec_ltn(const glm::vec2 left, const glm::vec2 right) {
+                return glm::all(glm::lessThan(left, right));
+            }
+
+
+            static inline bool vec_gtr_e(const glm::vec4 left, const glm::vec4 right) {
+                return glm::all(glm::greaterThanEqual(left, right));
+            }
+
+            static inline bool vec_gtr_e(const glm::vec3 left, const glm::vec3 right) {
+                return glm::all(glm::greaterThanEqual(left, right));
+            }
+
+            static inline bool vec_gtr_e(const glm::vec2 left, const glm::vec2 right) {
+                return glm::all(glm::greaterThanEqual(left, right));
+            }
+
+            static inline bool vec_ltn_e(const glm::vec4 left, const glm::vec4 right) {
+                return glm::all(glm::lessThanEqual(left, right));
+            }
+
+            static inline bool vec_ltn_e(const glm::vec3 left, const glm::vec3 right) {
+                return glm::all(glm::lessThanEqual(left, right));
+            }
+
+            static inline bool vec_ltn_e(const glm::vec2 left, const glm::vec2 right) {
+                return glm::all(glm::lessThanEqual(left, right));
+            }
+
+
             static inline Real crossProduct(const glm::vec2 v1, const glm::vec2& rkVector)
             {
                 return v1.x * rkVector.y - v1.y * rkVector.x;

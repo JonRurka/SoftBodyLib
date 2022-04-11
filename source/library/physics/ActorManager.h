@@ -40,6 +40,9 @@ namespace SoftBodyLib {
 		void SetTerrainManager(TerrainManager_Base* terr) { terrain = terr; }
 		TerrainManager_Base* GetTerrainManager() { return terrain; }
 
+		void SetCollision(Collisions_Base* col) { collision = col; }
+		Collisions_Base* GetCollision() { return collision; }
+
 	private:
 
 		
@@ -60,5 +63,6 @@ namespace SoftBodyLib {
 		float               m_total_sim_time = 0.f;
 
 		TerrainManager_Base* terrain;
+		Collisions_Base* collision;
 	};
 }

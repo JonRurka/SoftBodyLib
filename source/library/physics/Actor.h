@@ -55,8 +55,9 @@ namespace SoftBodyLib {
 
 
         void              UpdateBoundingBoxes();
-        void              calculateAveragePosition();
 
+
+        void              calculateLocalGForces();             //!< Derive the truck local g-forces from the global ones
 
         /// Virtually moves the actor at most 'direction.length()' meters towards 'direction' trying to resolve any collisions
         /// Returns a minimal offset by which the actor needs to be moved to resolve any collisions
@@ -70,7 +71,8 @@ namespace SoftBodyLib {
         /// Auto detects an ideal collision avoidance direction (front, back, left, right, up)
         /// Then moves the actor at most 'max_distance' meters towards that direction to resolve any collisions
         void              resolveCollisions(float max_distance, bool consider_up);
-
+        int               GetNumActiveConnectedBeams(int nodeid);     //!< Returns the number of active (non bounded) beams connected to a node
+        void              calculateAveragePosition();
         void              UpdatePhysicsOrigin();
 
         node_t*              ar_nodes;
@@ -117,9 +119,13 @@ namespace SoftBodyLib {
         glm::vec3         ar_origin;                   //!< Physics state; base position for softbody nodes
         ground_model_t*   ar_submesh_ground_model;
 
-        float             ar_collision_range;             //!< Physics attr
 
         ActorType         ar_driveable;                //!< Sim attr; marks vehicle type and features
+        
+        float             ar_collision_range;             //!< Physics attr
+        float             ar_top_speed;                   //!< Sim state
+        ground_model_t* ar_last_fuzzy_ground_model;
+
 
         // Gameplay state
         ActorState        ar_state;
@@ -136,6 +142,8 @@ namespace SoftBodyLib {
         
         void              CalcNodes();
         void              CalcBeams(bool trigger_hooks);
+        void              CalcBeamsInterActor();
+        void              CalcCabCollisions();
         
         void              RecalculateNodeMasses(Real total);
         void              calcNodeConnectivityGraph();
@@ -148,6 +156,7 @@ namespace SoftBodyLib {
 
         glm::vec3     m_avg_node_position;          //!< average node position
         glm::vec3     m_avg_node_position_prev;
+        glm::vec3     m_avg_node_velocity;
 
         PointColDetector* m_inter_point_col_detector;   //!< Physics
         PointColDetector* m_intra_point_col_detector;   //!< Physics
