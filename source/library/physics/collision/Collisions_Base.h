@@ -59,5 +59,46 @@ namespace SoftBodyLib {
 
 extern "C"
 {
+    float Collisions_Base_getSurfaceHeight(void* handle, float x, float z);
 
+    float Collisions_Base_getSurfaceHeightBelow(void* handle, float x, float z, float height);
+
+    //bool Collisions_Base_collisionCorrect(void* handle, glm::vec3* refpos, bool envokeScriptCallbacks = true);
+
+    bool Collisions_Base_groundCollision(void* handle, void* node, float dt);
+
+    bool Collisions_Base_isInside_1(void* handle, C_Vec3 pos, const std::string& inst, const std::string& box, float border = 0);
+
+    bool Collisions_Base_isInside_2(void* handle, C_Vec3 pos, void* cbox, float border = 0);
+
+    bool Collisions_Base_nodeCollision(void* handle, void* node, float dt);
+
+    int Collisions_Base_addCollisionBox(void* handle,
+        bool rotating,
+        bool virt,
+        C_Vec3 pos,
+        C_Vec3 rot,
+        C_Vec3 l,
+        C_Vec3 h,
+        C_Vec3 sr,
+        const std::string& eventname,
+        const std::string& instancename,
+        bool forcecam,
+        C_Vec3 campos,
+        C_Vec3 sc,
+        C_Vec3 dr,
+        short event_filter,
+        int scripthandler);
+
+    int Collisions_Base_addCollisionTri(void* handle, C_Vec3 p1, C_Vec3 p2, C_Vec3 p3, void* gm);
+
+    void Collisions_Base_removeCollisionBox(void* handle, int number);
+
+    void Collisions_Base_removeCollisionTri(void* handle, int number);
+
+    void Collisions_Base_clearEventCache(void* handle);
+
+    void* Collisions_Base_getCollisionAAB(void* handle);
+
+    C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, void* gm, float penetration);
 }

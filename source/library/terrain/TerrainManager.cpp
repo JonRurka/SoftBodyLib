@@ -115,6 +115,15 @@ void SoftBodyLib::SimpleTerrainManager::loadTerrainObjects()
 
 // #### TerrainManager_Base
 
+
+
+std::string TerrainManager_Base_getTerrainName(void* handle)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return terr->getTerrainName();
+}
+
 void* TerrainManager_Base_GetCollisions(void* handle)
 {
 	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
@@ -127,6 +136,47 @@ void TerrainManager_Base_SetCollisions(void* handle, void* col)
 	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
 
 	terr->SetCollisions((Collisions_Base*)col);
+}
+
+void TerrainManager_Base_setGravity(void* handle, glm::vec3 value)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+	terr->setGravity(value);
+}
+
+glm::vec3 TerrainManager_Base_getGravity(void* handle)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return terr->getGravity();
+}
+
+float TerrainManager_Base_GetHeightAt(void* handle, float x, float z)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return terr->GetHeightAt(x, z);
+}
+
+glm::vec3 TerrainManager_Base_GetNormalAt(void* handle, float x, float y, float z)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return terr->GetNormalAt(x, y, z);
+}
+
+glm::vec3 TerrainManager_Base_getMaxTerrainSize(void* handle)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return terr->getMaxTerrainSize();
+}
+
+void* TerrainManager_Base_getTerrainCollisionAAB(void* handle)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return &terr->getTerrainCollisionAAB();
 }
 
 

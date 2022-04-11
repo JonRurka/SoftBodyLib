@@ -2,8 +2,12 @@
 
 #include "stdafx.h"
 
-namespace SoftBodyLib {
+struct C_Vec2;
+struct C_Vec3;
+struct C_Vec4;
+struct C_Quat;
 
+namespace SoftBodyLib {
 
 	class Actor;
 	class ActorManager;

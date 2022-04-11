@@ -1,6 +1,9 @@
 #pragma once
 
+#include <stdafx.h>
 #include <cstring>
+#include "ForwardDeclarations.h"
+#include "C_Variables.h"
 
 namespace SoftBodyLib {
 
@@ -272,4 +275,22 @@ namespace SoftBodyLib {
         bool                asr_free_position = false;   //!< Disables the automatic spawn position adjustment
         bool                asr_terrn_machine = false;   //!< This is a fixed machinery
     };
+}
+
+extern "C"
+{
+    // #### node_t
+
+    C_Vec3   node_t_getRelPosition(void* handle);
+
+    C_Vec3   node_t_getAbsPosition(void* handle);
+
+    C_Vec3   node_t_getVelocity(void* handle);
+
+    C_Vec3   node_t_getForces(void* handle);
+
+    // #### collision_box_t
+
+    // #### ground_model_t
+
 }

@@ -4,12 +4,14 @@ set(${PROJECT_NAME}_headers
     dll_main.h
     ForwardDeclarations.h
 	SimContext.h
+    C_Variables.h
     stdafx.h
 )
 
 set(${PROJECT_NAME}_sources
     dll_main.cpp
 	SimContext.cpp
+    C_Variables.cpp
 )
 
 add_subdirectory(utils)

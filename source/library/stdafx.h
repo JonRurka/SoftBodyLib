@@ -22,6 +22,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
 #if defined(WIN32) || defined(WIN64)
 #include <Windows.h>
 #define WIN32_LEAN_AND_MEAN

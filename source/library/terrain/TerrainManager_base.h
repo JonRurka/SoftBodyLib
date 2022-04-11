@@ -50,7 +50,21 @@ namespace SoftBodyLib {
 }
 
 extern "C" {
+	std::string TerrainManager_Base_getTerrainName(void* handle);
+
 	void* TerrainManager_Base_GetCollisions(void* handle);
 
 	void TerrainManager_Base_SetCollisions(void* handle, void* col);
+
+	void			TerrainManager_Base_setGravity(void* handle, glm::vec3 value);
+
+	glm::vec3		TerrainManager_Base_getGravity(void* handle);
+
+	float           TerrainManager_Base_GetHeightAt(void* handle, float x, float z);
+
+	glm::vec3		TerrainManager_Base_GetNormalAt(void* handle, float x, float y, float z);
+
+	glm::vec3		TerrainManager_Base_getMaxTerrainSize(void* handle);
+
+	void*	TerrainManager_Base_getTerrainCollisionAAB(void* handle);
 }

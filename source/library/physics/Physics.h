@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ForwardDeclarations.h"
+#include "C_Variables.h"
 //#include "../ForwardDeclarations.h"
 #include "SimData.h"
 

@@ -803,7 +803,139 @@ void Collisions::finishLoadingTerrain()
 ////////////////////
 /// C INTERFACE
 
+
+// #### Collisions_Base
+
+float Collisions_Base_getSurfaceHeight(void* handle, float x, float z)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->getSurfaceHeight(x, z);
+}
+
+float Collisions_Base_getSurfaceHeightBelow(void* handle, float x, float z, float height)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->getSurfaceHeightBelow(x, z, height);
+}
+
+bool Collisions_Base_groundCollision(void* handle, void* node, float dt)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->groundCollision((SoftBodyLib::node_t*)node, dt);
+}
+
+bool Collisions_Base_isInside_1(void* handle, C_Vec3 pos, const std::string& inst, const std::string& box, float border)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->isInside(C_Vec3::From(pos), inst, box, border);
+}
+
+bool Collisions_Base_isInside_2(void* handle, C_Vec3 pos, void* cbox, float border)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->isInside(C_Vec3::From(pos), (SoftBodyLib::collision_box_t*)cbox, border);
+}
+
+bool Collisions_Base_nodeCollision(void* handle, void* node, float dt)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->nodeCollision((SoftBodyLib::node_t*)node, dt, false);
+}
+
+int Collisions_Base_addCollisionBox(void* handle, 
+    bool rotating, 
+    bool virt, 
+    C_Vec3 pos,
+    C_Vec3 rot,
+    C_Vec3 l,
+    C_Vec3 h,
+    C_Vec3 sr,
+    const std::string& eventname, 
+    const std::string& instancename, 
+    bool forcecam, 
+    C_Vec3 campos,
+    C_Vec3 sc,
+    C_Vec3 dr,
+    short event_filter, 
+    int scripthandler)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->addCollisionBox(
+        rotating,
+        virt,
+        C_Vec3::From(pos),
+        C_Vec3::From(rot),
+        C_Vec3::From(l),
+        C_Vec3::From(h),
+        C_Vec3::From(sr),
+        eventname,
+        instancename,
+        forcecam,
+        C_Vec3::From(campos),
+        C_Vec3::From(sc),
+        C_Vec3::From(dr),
+        (CollisionEventFilter)event_filter,
+        scripthandler);
+}
+
+int Collisions_Base_addCollisionTri(void* handle, 
+    C_Vec3 p1,
+    C_Vec3 p2,
+    C_Vec3 p3,
+    void* gm)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return col->addCollisionTri(C_Vec3::From(p1), C_Vec3::From(p2), C_Vec3::From(p2), (ground_model_t*)gm);
+}
+
+void Collisions_Base_removeCollisionBox(void* handle, int number)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    col->removeCollisionBox(number);
+}
+
+void Collisions_Base_removeCollisionTri(void* handle, int number)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    col->removeCollisionTri(number);
+}
+
+void Collisions_Base_clearEventCache(void* handle)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    col->clearEventCache();
+}
+
+void* Collisions_Base_getCollisionAAB(void* handle)
+{
+    Collisions_Base* col = (Collisions_Base*)handle;
+
+    return &col->getCollisionAAB();
+}
+
+C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, void* gm, float penetration)
+{
+    return C_Vec3::To(primitiveCollision((node_t*)node, C_Vec3::From(velocity), mass, C_Vec3::From(normal), dt, (ground_model_t*)gm, penetration));
+}
+
+
+
+// #### Collisions
+
 void* Collisions_New(float terrn_size_x, float terrn_size_y, float terrn_size_z)
 {
     return new Collisions(glm::vec3(terrn_size_x, terrn_size_y, terrn_size_z));
 }
+
+

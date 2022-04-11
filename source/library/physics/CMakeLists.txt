@@ -11,6 +11,7 @@ set(${module}_headers
 )
 
 set(${module}_sources
+    SimData.cpp
     Actor.cpp
 	ActorManager.cpp
 	ActorSpawner.cpp
