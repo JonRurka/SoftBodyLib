@@ -202,3 +202,8 @@ namespace SoftBodyLib {
 
     
 }
+
+extern "C"
+{
+    void* Collisions_New(float terrn_size_x, float terrn_size_y, float terrn_size_z);
+}

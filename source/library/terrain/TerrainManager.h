@@ -6,6 +6,7 @@ namespace SoftBodyLib {
 	class SimpleTerrainManager : public TerrainManager_Base
 	{
 	public:
+		SimpleTerrainManager();
 		SimpleTerrainManager(Collisions_Base* col);
 
 
@@ -13,8 +14,8 @@ namespace SoftBodyLib {
 		std::string getTerrainName();
 
 		// Simulation
-		virtual void			setGravity(glm::vec3 value) = 0;
-		virtual glm::vec3		getGravity() = 0;
+		virtual void			setGravity(glm::vec3 value);
+		virtual glm::vec3		getGravity();
 		float					GetHeightAt(float x, float z);
 		glm::vec3				GetNormalAt(float x, float y, float z);
 		glm::vec3				getMaxTerrainSize();
@@ -32,4 +33,10 @@ namespace SoftBodyLib {
 
 		glm::vec3 m_gravity;
 	};
+}
+
+extern "C" {
+	void* SimpleTerrainManager_New();
+
+	void* SimpleTerrainManager_New_col(void* col);
 }

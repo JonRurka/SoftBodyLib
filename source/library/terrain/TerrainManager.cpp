@@ -38,11 +38,14 @@ SoftBodyLib::TerrainManager_Base::TerrainManager_Base(Collisions_Base* col) :
 }
 
 
-
-
 // ***************************
 // ****** SimpleTerrainManager
 // ***************************
+
+SoftBodyLib::SimpleTerrainManager::SimpleTerrainManager() :
+	TerrainManager_Base(0), m_gravity(0)
+{
+}
 
 SoftBodyLib::SimpleTerrainManager::SimpleTerrainManager(Collisions_Base* col) :
 	TerrainManager_Base(col), m_gravity(0)
@@ -67,7 +70,7 @@ glm::vec3 SoftBodyLib::SimpleTerrainManager::getGravity()
 
 float SoftBodyLib::SimpleTerrainManager::GetHeightAt(float x, float z)
 {
-	return 0.0f;
+	return	1.2f;
 }
 
 glm::vec3 SoftBodyLib::SimpleTerrainManager::GetNormalAt(float x, float y, float z)
@@ -104,4 +107,37 @@ void SoftBodyLib::SimpleTerrainManager::initObjects()
 
 void SoftBodyLib::SimpleTerrainManager::loadTerrainObjects()
 {
+}
+
+
+////////////////////
+/// C INTERFACE
+
+// #### TerrainManager_Base
+
+void* TerrainManager_Base_GetCollisions(void* handle)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	return terr->GetCollisions();
+}
+
+void TerrainManager_Base_SetCollisions(void* handle, void* col)
+{
+	TerrainManager_Base* terr = (TerrainManager_Base*)handle;
+
+	terr->SetCollisions((Collisions_Base*)col);
+}
+
+
+// #### SimpleTerrainManager
+
+void* SimpleTerrainManager_New()
+{
+	return new SimpleTerrainManager();
+}
+
+void* SimpleTerrainManager_New_col(void* col)
+{
+	return new SimpleTerrainManager((Collisions_Base*)col);
 }

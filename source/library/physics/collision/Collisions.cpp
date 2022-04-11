@@ -800,5 +800,10 @@ void Collisions::finishLoadingTerrain()
 }
 
 
+////////////////////
+/// C INTERFACE
 
-
+void* Collisions_New(float terrn_size_x, float terrn_size_y, float terrn_size_z)
+{
+    return new Collisions(glm::vec3(terrn_size_x, terrn_size_y, terrn_size_z));
+}

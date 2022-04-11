@@ -49,3 +49,8 @@ namespace SoftBodyLib {
 	};
 }
 
+extern "C" {
+	void* TerrainManager_Base_GetCollisions(void* handle);
+
+	void TerrainManager_Base_SetCollisions(void* handle, void* col);
+}

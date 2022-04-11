@@ -56,3 +56,8 @@ namespace SoftBodyLib {
 
     glm::vec3 primitiveCollision(node_t* node, glm::vec3 velocity, float mass, glm::vec3 normal, float dt, ground_model_t* gm, float penetration = 0);
 };
+
+extern "C"
+{
+
+}

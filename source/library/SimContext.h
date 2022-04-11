@@ -36,6 +36,8 @@ namespace SoftBodyLib {
         SimState GetSimState() { return m_sim_state; }
         void SetSimState(SimState newState) { m_sim_state = newState; }
 
+        float DoTest(float a, float b) { return a * b; }
+
     private:
 
 
@@ -53,6 +55,8 @@ namespace SoftBodyLib {
 extern "C"
 {
     void* SimContext_New();
+
+    float SimContext_Test(void* sim_context, float a, float b);
 
     bool SimContext_LoadTerrain(void* sim_context, void* terrain_mgr, void* collisions, float gravity);
 

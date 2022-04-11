@@ -95,6 +95,13 @@ void* SimContext_New()
 	return new SimContext();
 }
 
+float SimContext_Test(void* sim_context, float a, float b)
+{
+	SimContext* cont = (SimContext*)sim_context;
+
+	return cont->DoTest(a, b);
+}
+
 bool SimContext_LoadTerrain(void* sim_context, void* terrain_mgr, void* collisions, float gravity)
 {
 	SimContext* cont = (SimContext*)sim_context;
