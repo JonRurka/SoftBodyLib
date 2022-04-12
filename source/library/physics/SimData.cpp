@@ -30,6 +30,21 @@ C_Vec3   node_t_getForces(void* handle)
     return C_Vec3::To(node->Forces);
 }
 
+
+// #### beam_t
+
+void* beam_t_getP1(void* handle)
+{
+    beam_t* beam = (beam_t*)handle;
+    return beam->p1;
+}
+
+void* beam_t_getP2(void* handle)
+{
+    beam_t* beam = (beam_t*)handle;
+    return beam->p1;
+}
+
 // #### collision_box_t
 
 // #### ground_model_t

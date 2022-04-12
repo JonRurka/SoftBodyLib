@@ -289,6 +289,13 @@ extern "C"
 
     C_Vec3   node_t_getForces(void* handle);
 
+    // #### beam_t
+
+    void* beam_t_getP1(void* handle);
+
+    void* beam_t_getP2(void* handle);
+
+
     // #### collision_box_t
 
     // #### ground_model_t
