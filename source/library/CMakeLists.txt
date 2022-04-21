@@ -5,6 +5,7 @@ set(${PROJECT_NAME}_headers
     ForwardDeclarations.h
 	SimContext.h
     C_Variables.h
+    Logger.h
     stdafx.h
 )
 
@@ -12,6 +13,7 @@ set(${PROJECT_NAME}_sources
     dll_main.cpp
 	SimContext.cpp
     C_Variables.cpp
+    Logger.cpp
 )
 
 add_subdirectory(utils)

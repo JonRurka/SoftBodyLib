@@ -2,69 +2,259 @@
 
 #include "physics/Physics.h"
 #include "resources/resources.h"
+#include "terrain/terrain.h"
+#include "utils/utils.h"
+#include "Logger.h"
+#include "SimContext.h"
 
 
-extern "C"
-{
-	int Exe_Test();
+//extern "C"
+//{
+// EXPORTED int Exe_Test();
 
-	int Init(int);
-
-
-	// TESTS
-
-	void UpdateActors(float m_dt_remainder, float m_simulation_time);
-
-	bool TestTrisCollision(glm::vec3 t_Pos1, glm::vec3 t_Pos2, glm::vec3 t_Pos3, glm::vec3 testP);
+// EXPORTED int Init(int);
 
 
+// TESTS
 
-	/* -------------------------------------------------------------------------- */
-	/* FileBuilder Interface                                                      */
-	/* -------------------------------------------------------------------------- */
+// EXPORTED void UpdateActors(float m_dt_remainder, float m_simulation_time);
 
-	FileBuilder* CreateFileBuilder();
+// EXPORTED bool TestTrisCollision(glm::vec3 t_Pos1, glm::vec3 t_Pos2, glm::vec3 t_Pos3, glm::vec3 testP);
 
-	void FileBuilder_SetGlobals(FileBuilder* file,
-		float dry_mass,
-		float cargo_mass,
-		std::string material_name);
 
-	void FileBuilder_SetNodeDefaults(FileBuilder* builder,
-		float load_weight,
-		float friction,
-		float volume,
-		float surface,
-		unsigned int options);
+//}
 
-	void FileBuilder_SetBeamDefaultsScale(FileBuilder* builder,
-		float springiness,
-		float damping_constan,
-		float deformation_threshold_constant,
-		float breaking_threshold_constant);
+// #### Logger
 
-	void FileBuilder_SetBeamDefaults(FileBuilder* builder,
-		float springiness,
-		float damping_constant,
-		float deformation_threshold,
-		float breaking_threshold,
-		float visual_beam_diameter,
-		std::string beam_material_name,
-		float plastic_deform_coef,
-		bool _enable_advanced_deformation, //!< Informs whether "enable_advanced_deformation" directive preceded these defaults.
-		bool _is_plastic_deform_coef_user_defined,
-		bool _is_user_defined //!< Informs whether these data were read from "set_beam_defaults" directive or filled in by the parser on startup.
-	);
+EXPORTED int Logger_PrepareMessages();
 
-	void FileBuilder_SetMinimassPreset(FileBuilder* builder, float min_mass);
+EXPORTED int Logger_GetMessage(int index, char* err_source, char* message);
 
-	void FileBuilder_AddNode(FileBuilder* builder, std::string id, float x, float y, float z, bool loadWeight, float weight);
 
-	void FileBuilder_AddBeam(FileBuilder* builder, std::string const& node_1, std::string const& node_2, bool canBreak, float breakLimit);
+// #### SimContext
 
-	void FileBuilder_NewSubmesh(FileBuilder* builder);
+EXPORTED void* SimContext_New();
 
-	void FileBuilder_FlushSubmesh(FileBuilder* builder);
+EXPORTED C_Vec3 SimContext_Test(void* sim_context, SoftBodyLib::ActorSpawnRequest rq);
 
-	void FileBuilder_AddCab(FileBuilder* builder, std::string const& n1, std::string const& n2, std::string const& n3, int option);
-}
+EXPORTED bool SimContext_LoadTerrain(void* sim_context, void* terrain_mgr, void* collisions, float gravity);
+
+EXPORTED void SimContext_UnloadTerrain(void* sim_context);
+
+EXPORTED void* SimContext_SpawnActor(void* sim_context, SoftBodyLib::ActorSpawnRequest rq, void* file_builder);
+
+EXPORTED void  SimContext_DeleteActor(void* sim_context, void* actor);
+
+EXPORTED void SimContext_ModifyActor(void* sim_context);
+
+EXPORTED void SimContext_UpdateActors(void* sim_context);
+
+EXPORTED void* SimContext_GetActorManager(void* sim_context);
+
+EXPORTED int SimContext_GetSimState(void* sim_context);
+
+
+// #### Actor
+
+EXPORTED int Actor_getNumNodes(void* handle);
+
+EXPORTED int Actor_GetNodes(void* handle, void** nodes);
+
+EXPORTED int Actor_GetNumBeams(void* handle);
+
+EXPORTED void Actor_GetBeams(void* handle, void** beams);
+
+EXPORTED void* Actor_GetNodeRef(void* handle, int index);
+
+EXPORTED void* Actor_GetBeamRef(void* handle, int index);
+
+EXPORTED void* Actor_GetInter_point_col_detector(void* handle);
+
+EXPORTED void* Actor_GetIntra_point_col_detector(void* handle);
+
+EXPORTED int Actor_GetNum_contactable_nodes(void* handle);
+
+EXPORTED int Actor_GetNum_contacters(void* handle);
+
+
+// #### node_t
+
+EXPORTED int	  Node_t_getPosition(void* handle);
+
+EXPORTED C_Vec3   Node_t_getRelPosition(void* handle);
+
+EXPORTED C_Vec3   Node_t_getAbsPosition(void* handle);
+
+EXPORTED C_Vec3   Node_t_getVelocity(void* handle);
+
+EXPORTED C_Vec3   Node_t_getForces(void* handle);
+
+EXPORTED C_Vec3   Node_t_getRelPosition_idx(void* ac_handle, int index);
+
+EXPORTED C_Vec3   Node_t_getAbsPosition_idx(void* ac_handle, int index);
+
+EXPORTED C_Vec3   Node_t_getVelocity_idx(void* ac_handle, int index);
+
+EXPORTED C_Vec3   Node_t_getForces_idx(void* ac_handle, int index);
+
+// #### beam_t
+
+EXPORTED void* Beam_t_getP1(void* handle);
+
+EXPORTED void* Beam_t_getP2(void* handle);
+
+
+// #### collision_box_t
+
+// #### ground_model_t
+
+
+
+// #### Collisions_Base
+
+EXPORTED    float Collisions_Base_getSurfaceHeight(void* handle, float x, float z);
+
+EXPORTED    float Collisions_Base_getSurfaceHeightBelow(void* handle, float x, float z, float height);
+
+//bool Collisions_Base_collisionCorrect(void* handle, glm::vec3* refpos, bool envokeScriptCallbacks = true);
+
+EXPORTED    bool Collisions_Base_groundCollision(void* handle, void* node, float dt);
+
+EXPORTED    bool Collisions_Base_isInside_1(void* handle, C_Vec3 pos, const std::string& inst, const std::string& box, float border = 0);
+
+EXPORTED    bool Collisions_Base_isInside_2(void* handle, C_Vec3 pos, void* cbox, float border = 0);
+
+EXPORTED    bool Collisions_Base_nodeCollision(void* handle, void* node, float dt);
+
+EXPORTED    int Collisions_Base_addCollisionBox(void* handle,
+    bool rotating,
+    bool virt,
+    C_Vec3 pos,
+    C_Vec3 rot,
+    C_Vec3 l,
+    C_Vec3 h,
+    C_Vec3 sr,
+    const std::string& eventname,
+    const std::string& instancename,
+    bool forcecam,
+    C_Vec3 campos,
+    C_Vec3 sc,
+    C_Vec3 dr,
+    short event_filter,
+    int scripthandler);
+
+EXPORTED    int Collisions_Base_addCollisionTri(void* handle, C_Vec3 p1, C_Vec3 p2, C_Vec3 p3, void* gm);
+
+EXPORTED    void Collisions_Base_removeCollisionBox(void* handle, int number);
+
+EXPORTED    void Collisions_Base_removeCollisionTri(void* handle, int number);
+
+EXPORTED    void Collisions_Base_clearEventCache(void* handle);
+
+EXPORTED    void* Collisions_Base_getCollisionAAB(void* handle);
+
+EXPORTED    C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, void* gm, float penetration);
+
+// #### collisions
+
+EXPORTED void* Collisions_New(float terrn_size_x, float terrn_size_y, float terrn_size_z);
+
+// #### PointColDetector
+
+EXPORTED void* PointColDetector_New(void* actor);
+
+//EXPORTED int PointColDetector_hit_list(void* handle, void** list, int size);
+
+EXPORTED int PointColDetector_hit_list(void* handle, SoftBodyLib::PointColDetector::pointid_t* list, int size);
+
+EXPORTED void PointColDetector_UpdateIntraPoint(void* handle, bool contactables = false);
+
+EXPORTED void PointColDetector_UpdateInterPoint(void* handle, bool ignorestate = false);
+
+EXPORTED void PointColDetector_query(void* handle, const C_Vec3 vec1, const C_Vec3 vec2, const C_Vec3 vec3, const float enlargeBB);
+
+//EXPORTED void* PointColDetector_pointid_t_getActor(void* handle);
+
+//EXPORTED short PointColDetector_pointid_t_getNode_id(void* handle);
+
+
+// #### TerrainManager_Base
+
+EXPORTED void TerrainManager_Base_getTerrainName(void* handle, char*, int len);
+
+EXPORTED void* TerrainManager_Base_GetCollisions(void* handle);
+
+EXPORTED void TerrainManager_Base_SetCollisions(void* handle, void* col);
+
+EXPORTED void TerrainManager_Base_setGravity(void* handle, C_Vec3 value);
+
+EXPORTED C_Vec3 TerrainManager_Base_getGravity(void* handle);
+
+EXPORTED float TerrainManager_Base_GetHeightAt(void* handle, float x, float z);
+
+EXPORTED C_Vec3 TerrainManager_Base_GetNormalAt(void* handle, float x, float y, float z);
+
+EXPORTED C_Vec3 TerrainManager_Base_getMaxTerrainSize(void* handle);
+
+EXPORTED void* TerrainManager_Base_getTerrainCollisionAAB(void* handle);
+
+
+// #### Terrain
+
+EXPORTED void* SimpleTerrainManager_New();
+
+EXPORTED void* SimpleTerrainManager_New_col(void* col);
+
+EXPORTED void SimpleTerrainManager_setGroundHeight(void* handle, float height);
+
+
+
+// #### FileBuilder
+
+EXPORTED void* FileBuilder_New();
+
+EXPORTED void FileBuilder_SetGlobals(void* handle,
+	float dry_mass,
+	float cargo_mass,
+	const char* material_name);
+
+EXPORTED void FileBuilder_SetNodeDefaults(void* handle,
+	float load_weight,
+	float friction,
+	float volume,
+	float surface,
+	unsigned int options);
+
+EXPORTED void FileBuilder_SetBeamDefaultsScale(void* handle,
+	float springiness,
+	float damping_constan,
+	float deformation_threshold_constant,
+	float breaking_threshold_constant);
+
+EXPORTED void FileBuilder_SetBeamDefaults(void* handle,
+	float springiness,
+	float damping_constant,
+	float deformation_threshold,
+	float breaking_threshold,
+	float visual_beam_diameter,
+	const char* beam_material_name,
+	float plastic_deform_coef,
+	bool _enable_advanced_deformation, //!< Informs whether "enable_advanced_deformation" directive preceded these defaults.
+	bool _is_plastic_deform_coef_user_defined,
+	bool _is_user_defined //!< Informs whether these data were read from "set_beam_defaults" directive or filled in by the parser on startup.
+);
+
+EXPORTED void FileBuilder_SetMinimassPreset(void* handle, float min_mass);
+
+EXPORTED void FileBuilder_AddNode(void* handle, const char* id, float x, float y, float z, bool loadWeight, float weight);
+
+EXPORTED void FileBuilder_AddBeam(void* handle, const char* node_1, const char* node_2, bool canBreak, float breakLimit);
+
+EXPORTED void FileBuilder_NewSubmesh(void* handle);
+
+EXPORTED void FileBuilder_FlushSubmesh(void* handle);
+
+EXPORTED void FileBuilder_AddCab(void* handle, const char* n1, const char* n2, const char* n3, int option);
+
+
+

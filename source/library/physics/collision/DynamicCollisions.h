@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Physics.h"
+#include "C_Variables.h"
 
 namespace SoftBodyLib {
     static bool BackfaceCollisionTest(const float distance,
@@ -31,3 +32,4 @@ namespace SoftBodyLib {
         const float collrange,
         ground_model_t& submesh_ground_model);
 }
+

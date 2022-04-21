@@ -1,4 +1,5 @@
 #include "ActorManager.h"
+#include "Logger.h"
 
 using namespace SoftBodyLib;
 
@@ -150,13 +151,21 @@ void ActorManager::SetupActor(Actor* actor, ActorSpawnRequest rq, std::shared_pt
 
 Actor* ActorManager::CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<File> def)
 {
-	Actor* actor = new Actor(m_actor_counter++, static_cast<int>(m_actors.size()), def, rq, this, terrain);
-	//actor->setUsedSkin(rq.asr_skin_entry);
+	Actor* actor = nullptr;
 
-	this->SetupActor(actor, rq, def);
+	try {
+		actor = new Actor(m_actor_counter++, static_cast<int>(m_actors.size()), def, rq, this, terrain);
+		//actor->setUsedSkin(rq.asr_skin_entry);
 
-	m_actors.push_back(actor);
+		this->SetupActor(actor, rq, def);
 
+		m_actors.push_back(actor);
+	}
+	catch (std::exception& e)
+	{
+		Logger::LogError("ActorManager::CreateActorInstance", e.what());
+	}
+		
 	return actor;
 }
 

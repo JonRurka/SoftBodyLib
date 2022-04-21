@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdafx.h>
-#include <cstring>
 #include "ForwardDeclarations.h"
 #include "C_Variables.h"
 
@@ -277,27 +275,7 @@ namespace SoftBodyLib {
     };
 }
 
-extern "C"
-{
-    // #### node_t
-
-    C_Vec3   node_t_getRelPosition(void* handle);
-
-    C_Vec3   node_t_getAbsPosition(void* handle);
-
-    C_Vec3   node_t_getVelocity(void* handle);
-
-    C_Vec3   node_t_getForces(void* handle);
-
-    // #### beam_t
-
-    void* beam_t_getP1(void* handle);
-
-    void* beam_t_getP2(void* handle);
 
 
-    // #### collision_box_t
 
-    // #### ground_model_t
 
-}

@@ -2,6 +2,20 @@
 
 #include <stdafx.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+
+#define EXPORTED extern "C" __declspec(dllexport)
+
+#elif defined(__linux__)
+
+#define EXPORTED extern "C"
+
+#else
+
+#error Unsupported platform
+
+#endif
+
 struct C_Vec2 {
 public:
     float x{ 0 };

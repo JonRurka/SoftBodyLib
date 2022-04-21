@@ -979,3 +979,5 @@ void Actor::CalcCabCollisions()
 			*ar_submesh_ground_model);
 	}
 }
+
+

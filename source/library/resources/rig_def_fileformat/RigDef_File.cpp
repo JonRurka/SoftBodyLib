@@ -17,15 +17,15 @@ const char* File::SubsectionToString(File::Subsection subsection)
 {
     switch (subsection)
     {
-    case (File::SUBSECTION_NONE):
+    case (File::Subsection::SUBSECTION_NONE):
         return "SUBSECTION_NONE";
-    case (File::SUBSECTION__FLEXBODIES__PROPLIKE_LINE):
+    case (File::Subsection::SUBSECTION__FLEXBODIES__PROPLIKE_LINE):
         return "SUBSECTION_PROPLIKE_LINE";
-    case (File::SUBSECTION__FLEXBODIES__FORSET_LINE):
+    case (File::Subsection::SUBSECTION__FLEXBODIES__FORSET_LINE):
         return "SUBSECTION_FORSET_LINE";
-    case (File::SUBSECTION__SUBMESH__TEXCOORDS):
+    case (File::Subsection::SUBSECTION__SUBMESH__TEXCOORDS):
         return "SUBSECTION_TEXCOORDS";
-    case (File::SUBSECTION__SUBMESH__CAB):
+    case (File::Subsection::SUBSECTION__SUBMESH__CAB):
         return "SUBSECTION_CAB";
     default:
         return "~ UNKNOWN SUBSECTION ~";
@@ -36,17 +36,17 @@ const char* File::SectionToString(File::Section section)
 {
     switch (section)
     {
-    case (File::SECTION_AIRBRAKES):
+    /*case (File::Section::SECTION_AIRBRAKES):
         return "airbrakes";
-    case (File::SECTION_ANIMATORS):
+    case (File::Section::SECTION_ANIMATORS):
         return "animators";
-    case (File::SECTION_ANTI_LOCK_BRAKES):
+    case (File::Section::SECTION_ANTI_LOCK_BRAKES):
         return "AntiLockBrakes";
-    case (File::SECTION_AUTHOR):
+    case (File::Section::SECTION_AUTHOR):
         return "author";
-    case (File::SECTION_AXLES):
+    case (File::Section::SECTION_AXLES):
         return "axles";
-    case (File::SECTION_BEAMS):
+    case (File::Section::SECTION_BEAMS):
         return "beams";
     case (File::SECTION_BRAKES):
         return "brakes";
@@ -174,7 +174,7 @@ const char* File::SectionToString(File::Section section)
         return "wings";
 
     case (File::SECTION_NONE):
-        return "SECTION_NONE";
+        return "SECTION_NONE";*/
     default:
         return "<unknown>";
     }
@@ -186,7 +186,7 @@ const char* File::KeywordToString(File::Keyword keyword)
 
     switch (keyword)
     {
-    case (File::KEYWORD_AIRBRAKES):
+    /*case (File::Keyword::KEYWORD_AIRBRAKES):
         return "airbrakes";
     case (File::KEYWORD_ANIMATORS):
         return "animators";
@@ -329,9 +329,10 @@ const char* File::KeywordToString(File::Keyword keyword)
     case (File::KEYWORD_WHEELS2):
         return "wheels2";
     case (File::KEYWORD_WINGS):
-        return "wings";
+        return "wings";*/
 
     default:
         return "~Unknown~";
     }
 }
+

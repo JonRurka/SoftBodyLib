@@ -2,6 +2,7 @@
 
 #include "physics/Physics.h"
 #include "terrain.h"
+#include "C_Variables.h"
 
 namespace SoftBodyLib {
 
@@ -49,22 +50,22 @@ namespace SoftBodyLib {
 	};
 }
 
-extern "C" {
-	std::string TerrainManager_Base_getTerrainName(void* handle);
+//extern "C" {
+EXPORTED void TerrainManager_Base_getTerrainName(void* handle, char*, int len);
 
-	void* TerrainManager_Base_GetCollisions(void* handle);
+EXPORTED void* TerrainManager_Base_GetCollisions(void* handle);
 
-	void TerrainManager_Base_SetCollisions(void* handle, void* col);
+EXPORTED void TerrainManager_Base_SetCollisions(void* handle, void* col);
 
-	void			TerrainManager_Base_setGravity(void* handle, glm::vec3 value);
+EXPORTED void TerrainManager_Base_setGravity(void* handle, C_Vec3 value);
 
-	glm::vec3		TerrainManager_Base_getGravity(void* handle);
+EXPORTED C_Vec3 TerrainManager_Base_getGravity(void* handle);
 
-	float           TerrainManager_Base_GetHeightAt(void* handle, float x, float z);
+EXPORTED float TerrainManager_Base_GetHeightAt(void* handle, float x, float z);
 
-	glm::vec3		TerrainManager_Base_GetNormalAt(void* handle, float x, float y, float z);
+EXPORTED C_Vec3 TerrainManager_Base_GetNormalAt(void* handle, float x, float y, float z);
 
-	glm::vec3		TerrainManager_Base_getMaxTerrainSize(void* handle);
+EXPORTED C_Vec3 TerrainManager_Base_getMaxTerrainSize(void* handle);
 
-	void*	TerrainManager_Base_getTerrainCollisionAAB(void* handle);
-}
+EXPORTED void* TerrainManager_Base_getTerrainCollisionAAB(void* handle);
+//}

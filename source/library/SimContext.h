@@ -4,6 +4,7 @@
 #include "resources/resources.h"
 #include "terrain/terrain.h"
 #include "resources/resources.h"
+#include "C_Variables.h"
 
 namespace SoftBodyLib {
 	using namespace Util;
@@ -28,7 +29,7 @@ namespace SoftBodyLib {
         // ----------------------------
         // Actors
 
-        Actor* SpawnActor(ActorSpawnRequest& rq, FileBuilder file_builder);
+        Actor* SpawnActor(ActorSpawnRequest& rq, FileBuilder* file_builder);
         //void                ModifyActor(ActorModifyRequest& rq);
         void                DeleteActor(Actor* actor);
         void                UpdateActors();
@@ -36,42 +37,25 @@ namespace SoftBodyLib {
         SimState GetSimState() { return m_sim_state; }
         void SetSimState(SimState newState) { m_sim_state = newState; }
 
-        float DoTest(float a, float b) { return a * b; }
+        C_Vec3 DoTest(SoftBodyLib::ActorSpawnRequest rq) {
+            return C_Vec3::To(rq.asr_position);
+        }
 
     private:
 
 
         // Actors (physics)
         ActorManager         m_actor_manager;
-        TerrainManager_Base* g_sim_terrain;
-        Collisions_Base*     g_collisions;
-        SimState             m_sim_state;
+        TerrainManager_Base* g_sim_terrain{ nullptr };
+        Collisions_Base*     g_collisions{ nullptr };
+        SimState             m_sim_state{ SimState ::OFF};
 
         Actor* m_last_spawned_actor = nullptr;     //!< Last actor spawned by user and still alive.
 
 	};
 }
 
-extern "C"
-{
-    void* SimContext_New();
 
-    float SimContext_Test(void* sim_context, float a, float b);
 
-    bool SimContext_LoadTerrain(void* sim_context, void* terrain_mgr, void* collisions, float gravity);
 
-    void SimContext_UnloadTerrain(void* sim_context);
-
-    void* SimContext_SpawnActor(void* sim_context, SoftBodyLib::ActorSpawnRequest& rq, void* file_builder);
-
-    void  SimContext_DeleteActor(void* sim_context, void* actor);
-
-    void SimContext_ModifyActor(void* sim_context);
-
-    void SimContext_UpdateActors(void* sim_context);
-
-    void* SimContext_GetActorManager(void* sim_context);
-
-    int SimContext_GetSimState(void* sim_context);
-}
 

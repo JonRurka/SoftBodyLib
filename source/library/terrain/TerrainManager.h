@@ -26,17 +26,17 @@ namespace SoftBodyLib {
 		void                    LoadPredefinedActors();
 		bool                    HasPredefinedActors();
 
+		void setGroundHeight(float val) { g_pos = val; };
+
 	private:
 		void initTerrainCollisions();
 		void initObjects();
 		void loadTerrainObjects();
 
 		glm::vec3 m_gravity;
+		float g_pos{ 0 };
 	};
 }
 
-extern "C" {
-	void* SimpleTerrainManager_New();
 
-	void* SimpleTerrainManager_New_col(void* col);
-}
+

@@ -13,6 +13,7 @@ void PointColDetector::UpdateIntraPoint(bool contactables)
 		m_collision_partners = { m_actor };
 		m_object_list_size = contacters_size;
 		update_structures_for_contacters(contactables);
+		
 	}
 
 	m_kdtree[0].ref = NULL;
@@ -79,6 +80,9 @@ void PointColDetector::update_structures_for_contacters(bool ignoreinternal)
 	m_ref_list.resize(m_object_list_size);
 	m_pointid_list.resize(m_object_list_size);
 
+	m_ref_list.clear();
+	m_pointid_list.clear();
+
 	// Insert all contacters into the list of points to consider when building the kdtree
 	int refi = 0;
 	for (auto actor : m_collision_partners) 
@@ -89,14 +93,32 @@ void PointColDetector::update_structures_for_contacters(bool ignoreinternal)
 		{
 			if (actor->ar_nodes[i].nd_contacter || (!internal_collision && actor->ar_nodes[i].nd_contactable))
 			{
-				m_pointid_list[refi].actor = actor;
-				m_pointid_list[refi].node_id = i;
-				m_ref_list[refi].pidref = &m_pointid_list[refi];
-				m_ref_list[refi].point = glm::value_ptr(actor->ar_nodes[i].AbsPosition);
+				pointid_t tpointid;
+				tpointid.actor = actor;
+				tpointid.node_id = i;
+
+				m_pointid_list.push_back(tpointid);
+				//m_pointid_list[refi].actor = actor;
+				//m_pointid_list[refi].node_id = i;
+
+				refelem_t trefelem;
+				trefelem.pidref = &m_pointid_list[refi];
+				trefelem.point = glm::value_ptr(actor->ar_nodes[i].AbsPosition);
+
+				m_ref_list.push_back(trefelem);
+				//m_ref_list[refi].pidref = &m_pointid_list[refi];
+				//m_ref_list[refi].point = glm::value_ptr(actor->ar_nodes[i].AbsPosition);
+
+				/*std::string msg = "(" + std::to_string(m_ref_list[refi].point[0]) + ", " +
+					std::to_string(m_ref_list[refi].point[1]) + ", " + 
+					std::to_string(m_ref_list[refi].point[2]) + ")";
+
+				Logger::LogDebug("PointColDetector::update_structures_for_contacters", msg);*/
 			}
 		}
 	}
 
+	float x = m_ref_list[1].point[0];
 
 	m_kdtree.resize(std::max(1.0, std::pow(2, std::ceil(std::log2(m_object_list_size)) + 1)));
 }
@@ -207,6 +229,8 @@ void PointColDetector::build_kdtree_incr(int axis, int index)
 		if (slice_size == 2)
 		{
 			median = begin + 1;
+
+
 			if (m_ref_list[begin].point[axis] > m_ref_list[median].point[axis])
 			{
 				std::swap(m_ref_list[begin], m_ref_list[median]);
@@ -311,3 +335,8 @@ void PointColDetector::partintwo(const int start, const int median, const int en
 		maxex = std::max(maxex, m_ref_list[i].point[axis]);
 	}
 }
+
+
+
+
+

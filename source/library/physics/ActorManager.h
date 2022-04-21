@@ -66,3 +66,4 @@ namespace SoftBodyLib {
 		Collisions_Base* collision;
 	};
 }
+

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../Physics.h"
+#include "C_Variables.h"
+#include "Logger.h"
 
 #ifdef ZERO_MEM_ALLOC
 #include "../../utils/ZeroedMemoryAllocator.h"
@@ -71,3 +73,4 @@ namespace SoftBodyLib {
 	};
 
 }
+

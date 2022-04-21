@@ -101,6 +101,8 @@ void FileBuilder::AddNode(std::string const& id, float x, float y, float z, bool
 	node.node_minimass = std::make_shared<MinimassPreset>(cur_MinimassPreset);
 	node.detacher_group = 0; // TODO
 
+	node.id.setStr(id);
+
 	node.position.x = x;
 	node.position.y = y;
 	node.position.z = z;
@@ -164,3 +166,6 @@ void FileBuilder::AddCab(std::string const& n1, std::string const& n2, std::stri
 	cur_Submesh->cab_triangles.push_back(cab);
 	lineCounter++;
 }
+
+
+

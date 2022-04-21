@@ -1,9 +1,12 @@
 #include "SimContext.h"
+#include "Logger.h"
 
 using namespace SoftBodyLib;
 
 bool SoftBodyLib::SimContext::LoadTerrain(TerrainManager_Base::TerrainSettings terrn_settings)
 {
+	Logger::LogInfo("SimContext::LoadTerrain", "Loading Terrain: " + terrn_settings.terrain_mgr->getTerrainName());
+
 	m_last_spawned_actor = nullptr;
 
 	g_sim_terrain = TerrainManager_Base::LoadAndPrepareTerrain(terrn_settings);
@@ -31,36 +34,45 @@ void SoftBodyLib::SimContext::UnloadTerrain()
 	}
 }
 
-Actor* SoftBodyLib::SimContext::SpawnActor(ActorSpawnRequest& rq, FileBuilder file_builder)
+Actor* SoftBodyLib::SimContext::SpawnActor(ActorSpawnRequest& rq, FileBuilder* file_builder)
 {
-	bool predefined_on_terrain = rq.asr_origin == (ActorSpawnRequest::Origin)ActorSpawnRequest::DefaultOrigin::TERRN_DEF;
-	std::shared_ptr<File> def = std::shared_ptr<File>(&file_builder.file);
+	Actor* fresh_actor = nullptr;
 
-	if (predefined_on_terrain)
-	{
-		// todo
+	//return fresh_actor;
+	try {
+		bool predefined_on_terrain = rq.asr_origin == (ActorSpawnRequest::Origin)ActorSpawnRequest::DefaultOrigin::TERRN_DEF;
+		std::shared_ptr<File> def = std::shared_ptr<File>(&file_builder->file);
+
+		if (predefined_on_terrain)
+		{
+			// todo
+		}
+
+		if (def == nullptr)
+		{
+			Logger::LogError("SimContext::SpawnActor", "File Definition was null!");
+			return nullptr;
+		}
+
+		// if (rq.asr_skin_entry != nullptr)
+
+		fresh_actor = m_actor_manager.CreateActorInstance(rq, def);
+
+		if (rq.asr_spawnbox == nullptr)
+		{
+			// Try to resolve collisions with other actors
+			fresh_actor->resolveCollisions(50.0f, true /*m_player_actor == nullptr */);
+		}
+
+		if (rq.asr_terrn_machine)
+		{
+			fresh_actor->ar_driveable = ActorType::MACHINE;
+		}
 	}
-
-	if (def == nullptr)
+	catch (std::exception& e)
 	{
-		return nullptr; // todo: report error.
+		Logger::LogError("ActorManager::SpawnActor", e.what());
 	}
-
-	// if (rq.asr_skin_entry != nullptr)
-
-	Actor* fresh_actor = m_actor_manager.CreateActorInstance(rq, def);
-
-	if (rq.asr_spawnbox == nullptr)
-	{
-		// Try to resolve collisions with other actors
-		fresh_actor->resolveCollisions(50.0f, true /*m_player_actor == nullptr */ );
-	}
-
-	if (rq.asr_terrn_machine)
-	{
-		fresh_actor->ar_driveable = ActorType::MACHINE;
-	}
-
 	return fresh_actor;
 }
 
@@ -86,86 +98,3 @@ void SoftBodyLib::SimContext::UpdateActors()
 	m_actor_manager.UpdateActors(nullptr);
 }
 
-
-////////////////////
-/// C INTERFACE
-
-void* SimContext_New()
-{
-	return new SimContext();
-}
-
-float SimContext_Test(void* sim_context, float a, float b)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	return cont->DoTest(a, b);
-}
-
-bool SimContext_LoadTerrain(void* sim_context, void* terrain_mgr, void* collisions, float gravity)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	TerrainManager_Base* terr = (TerrainManager_Base*)terrain_mgr;
-	Collisions_Base* col = (Collisions_Base*)collisions;
-
-	TerrainManager_Base::TerrainSettings terrn_settings;
-	terrn_settings.terrain_mgr = terr;
-	terrn_settings.collisions = col;
-	terrn_settings.gravity = gravity;
-
-	return cont->LoadTerrain(terrn_settings);
-}
-
-void SimContext_UnloadTerrain(void* sim_context)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	cont->UnloadTerrain();
-}
-
-void* SimContext_SpawnActor(void* sim_context, SoftBodyLib::ActorSpawnRequest& rq, void* file_builder)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	FileBuilder builder = *((FileBuilder*)file_builder);
-
-	return cont->SpawnActor(rq, builder);
-}
-
-void SimContext_DeleteActor(void* sim_context, void* actor)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	Actor* act = (Actor*)actor;
-
-	cont->DeleteActor(act);
-}
-
-void SimContext_ModifyActor(void* sim_context)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	// todo
-}
-
-void SimContext_UpdateActors(void* sim_context)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	cont->UpdateActors();
-}
-
-void* SimContext_GetActorManager(void* sim_context)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	return cont->GetActorManager();
-}
-
-int SimContext_GetSimState(void* sim_context)
-{
-	SimContext* cont = (SimContext*)sim_context;
-
-	return (int)cont->GetSimState();
-}

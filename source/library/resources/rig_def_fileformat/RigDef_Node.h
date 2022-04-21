@@ -1,15 +1,18 @@
 #pragma once
 
-#include "../../utils/BitFlags.h"
-#include <string>
-#include <memory>
-#include <vector>
-#include <sstream>
-#include <glm/glm.hpp>
+//#include "../../utils/BitFlags.h"
+//#include <string>
+//#include <memory>
+//#include <vector>
+//#include <sstream>
+//#include <glm/glm.hpp>
 
-struct NodeDefaults;
-struct MinimassPreset;
-struct BeamDefaults;
+//#include "rigdef.h"
+#include "stdafx.h"
+#include "utils/BitFlags.h"
+#include "RigDef_Prerequisites.h"
+//#include "RigDef_File.h"
+
 
 struct Node
 {

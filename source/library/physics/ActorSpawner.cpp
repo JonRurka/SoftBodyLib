@@ -101,7 +101,7 @@ void SoftBodyLib::ActorSpawner::InitializeRig()
 	m_actor->ar_beams = new beam_t[req.num_beams];
 	m_actor->ar_nodes = new node_t[req.num_nodes];
 
-
+	m_actor->ar_minimass.resize(req.num_nodes);
 
 	memset(m_actor->ar_collcabs, 0, sizeof(int) * MAX_CABS);
 	memset(m_actor->ar_inter_collcabrate, 0, sizeof(collcab_rate_t) * MAX_CABS);
@@ -361,6 +361,7 @@ std::pair<unsigned int, bool> ActorSpawner::AddNode(Node::Id& id)
 	if (!id.IsValid())
 	{
 		// Attempt to add node with 'INVALID' flag
+		printf("Attempt to add node with 'INVALID' flag\n");
 		return std::make_pair(0, false);
 	}
 
@@ -375,6 +376,7 @@ std::pair<unsigned int, bool> ActorSpawner::AddNode(Node::Id& id)
 			return std::make_pair(0, false);
 		}
 		m_actor->ar_num_nodes++;
+		printf("Actually added the node!\n");
 		return std::make_pair(new_index, true);
 	}
 	if (id.IsTypeNumbered())

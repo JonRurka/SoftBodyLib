@@ -1,6 +1,32 @@
 #pragma once
 
-struct AeroAnimator;
+
+struct Beam;
+struct BeamDefaults;
+struct BeamDefaultsScale;
+
+struct Cab;
+
+struct CollisionBox;
+
+struct File;
+struct Flexbody;
+
+struct Globals;
+
+struct MinimassPreset;
+
+struct Node;
+struct NodeCollision;
+struct NodeDefaults;
+
+struct Submesh;
+
+struct Texcoord;
+
+
+
+/*struct AeroAnimator;
 struct Airbrake;
 struct Animation;
 struct AntiLockBrakes;
@@ -49,6 +75,6 @@ struct VideoCamera;
 
 class Parser;
 class Validator;
-class SequentialImporter;
+class SequentialImporter;*/
 
 

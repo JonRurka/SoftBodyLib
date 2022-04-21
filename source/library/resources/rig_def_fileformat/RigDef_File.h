@@ -1,11 +1,15 @@
 #pragma once
 
+//#include "rigdef.h"
+#include "stdafx.h"
 #include "physics/SimConstants.h"
+#include "utils/BitFlags.h"
+#include "RigDef_Prerequisites.h"
 #include "RigDef_Node.h"
 
-#include <string>
-#include <memory>
-#include <unordered_map>
+//#include <string>
+//#include <memory>
+//#include <unordered_map>
 
 /* -------------------------------------------------------------------------- */
 /* Directive SET_NODE_DEFAULTS                                                */
@@ -213,7 +217,7 @@ struct File
     };
 
 
-    enum Keyword
+    enum class Keyword
     {
         KEYWORD_ADD_ANIMATION = 1,
         //KEYWORD_ADVDRAG, // not supported yet
@@ -330,7 +334,7 @@ struct File
         KEYWORD_INVALID = 0xFFFFFFFF
     };
 
-    enum Section
+    enum class Section
     {
         SECTION_AIRBRAKES,
         SECTION_AUTHOR,
@@ -408,7 +412,7 @@ struct File
         SECTION_INVALID = 0xFFFFFFFF
     };
 
-    enum Subsection
+    enum class Subsection
     {
         SUBSECTION_NONE = 0,
 
@@ -441,6 +445,6 @@ struct File
     std::shared_ptr<Module> root_module; //!< Required to exist. `shared_ptr` is used for unified handling with other modules.
     std::unordered_map< std::string, std::shared_ptr<Module> > user_modules;
 
-    bool minimass_skip_loaded_nodes; //!< Only apply minimum mass to nodes without "L" option. Global effect.
+    bool minimass_skip_loaded_nodes{ false }; //!< Only apply minimum mass to nodes without "L" option. Global effect.
 
 };

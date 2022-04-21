@@ -1,6 +1,7 @@
 #pragma once
 
 #include "resources.h"
+#include "C_Variables.h"
 
 class FileBuilder
 {
@@ -65,3 +66,6 @@ private:
 		return Node::Ref(node_id, 0, Node::Ref::REGULAR_STATE_IS_VALID | Node::Ref::REGULAR_STATE_IS_NAMED, lineCounter);
 	}
 };
+
+
+
