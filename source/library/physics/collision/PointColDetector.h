@@ -20,11 +20,20 @@ namespace SoftBodyLib {
 		{
 			Actor* actor;
 			short node_id;
+			node_t* node;
 		};
 
 		std::vector<pointid_t*> hit_list;
 
-		PointColDetector(Actor* actor) : m_actor(actor), m_object_list_size(-1), m_bbmin(0), m_bbmax(0){};
+		PointColDetector(Actor* actor) : 
+			m_actor(actor), 
+			m_object_list_size(-1), 
+			m_bbmin(0), 
+			m_bbmax(0),
+			m_ref_list(new refelem_t[0]),
+			m_pointid_list(new pointid_t[0]),
+			m_kdtree(new kdnode_t[0])
+		{};
 
 		
 		void UpdateIntraPoint(bool contactables = false);
@@ -34,6 +43,9 @@ namespace SoftBodyLib {
 
 
 		void query(const glm::vec3& vec1, const glm::vec3& vec2, const glm::vec3& vec3, const float enlargeBB);
+
+		glm::vec3 Get_bbmin() { return m_bbmin; }
+		glm::vec3 Get_bbmax() { return m_bbmax; }
 
 	private:
 
@@ -59,9 +71,16 @@ namespace SoftBodyLib {
 		Actor* m_actor;
 		std::vector<Actor*>		m_linked_actors;
 		std::vector<Actor*>		m_collision_partners;
-		std::vector<refelem_t>	m_ref_list;
-		std::vector<pointid_t>	m_pointid_list;
-		std::vector<kdnode_t>	m_kdtree;
+
+
+		//std::vector<refelem_t>	m_ref_list;
+		//std::vector<pointid_t>	m_pointid_list;
+		refelem_t* m_ref_list;
+		pointid_t* m_pointid_list;
+
+		//std::vector<kdnode_t>	m_kdtree;
+		kdnode_t* m_kdtree{ nullptr };
+
 		glm::vec3				m_bbmin;
 		glm::vec3				m_bbmax;
 		int						m_object_list_size;

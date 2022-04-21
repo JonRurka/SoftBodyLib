@@ -10,9 +10,7 @@ int main()
 	SimContext context;
 
 
-	glm::vec3 val(1, 2, 3);
-	float* t = glm::value_ptr(val);
-	printf("%f, %f, %f\n", t[0], val[1], val[2]);
+
 
 	//return 0;
 
@@ -38,10 +36,10 @@ int main()
 
 	fileBuilder.AddNode("0", 0, 0, 0, false, 0);
 	fileBuilder.AddNode("1", 0, 1, 0, false, 0);
-	fileBuilder.AddNode("2", 0, 2, 0, false, 0);
+	//fileBuilder.AddNode("2", 0, 2, 0, false, 0);
 
 	fileBuilder.AddBeam("0", "1", true, 10000);
-	fileBuilder.AddBeam("1", "2", true, 10000);
+	//fileBuilder.AddBeam("1", "2", true, 10000);
 
 	ActorSpawnRequest res;
 
@@ -59,20 +57,21 @@ int main()
 
 	PointColDetector* pointcol = ac->m_intra_point_col_detector;
 
+	//node_t n = ac->ar_nodes[1];
+	//printf("node 1: %f, %f, %f\n", n.AbsPosition.x, n.AbsPosition.y, n.AbsPosition.z);
 
-	/*for (int i = 0; i < 2; i++)
-	{
-		float* tmp = glm::value_ptr(ac->ar_nodes[i].AbsPosition);
-		printf("%f, %f, %f || %f, %f, %f\n", 
-			ac->ar_nodes[i].AbsPosition[0], ac->ar_nodes[i].AbsPosition[1], ac->ar_nodes[i].AbsPosition[2],
-			tmp[0], tmp[1], tmp[2]);
-	}*/
+
+
 
 	pointcol->UpdateIntraPoint(true);
 
-	pointcol->query(glm::vec3(-0.2f, 10, 0), glm::vec3(0, 10.2f, 0), glm::vec3(0.2f, 0, 0), 0.1f);
+	pointcol->query(glm::vec3(-0.2f, 0, 0), glm::vec3(0, 1.2f, 0), glm::vec3(0.2f, 0, 0), 0.1f);
 
-
+	for (auto hit : pointcol->hit_list)
+	{
+		node_t* n = hit->node;
+		printf("hit node: %f, %f, %f\n", n->AbsPosition.x, n->AbsPosition.y, n->AbsPosition.z);
+	}
 
 	//Actor_GetNodes(ac)
 

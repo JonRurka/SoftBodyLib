@@ -533,11 +533,19 @@ int PointColDetector_hit_list(void* handle, PointColDetector::pointid_t* list, i
 		if (i >= size)
 			break;
 
+		Logger::LogDebug("PointColDetector_hit_list", "Node ID: " + std::to_string(hit->node_id));
+
 		list[i] = *hit;
 		i++;
 	}
 
 	return i;
+}
+
+EXPORTED int PointColDetector_numHits(void* handle)
+{
+	PointColDetector* p_col = (PointColDetector*)handle;
+	return p_col->hit_list.size();
 }
 
 void PointColDetector_UpdateIntraPoint(void* handle, bool contactables)
@@ -559,6 +567,18 @@ void PointColDetector_query(void* handle, const C_Vec3 vec1, const C_Vec3 vec2, 
 	PointColDetector* p_col = (PointColDetector*)handle;
 
 	p_col->query(C_Vec3::From(vec1), C_Vec3::From(vec2), C_Vec3::From(vec3), enlargeBB);
+}
+
+EXPORTED C_Vec3 PointColDetector_Get_bbmin(void* handle)
+{
+	PointColDetector* p_col = (PointColDetector*)handle;
+	return C_Vec3::To(p_col->Get_bbmin());
+}
+
+EXPORTED C_Vec3 PointColDetector_Get_bbmax(void* handle)
+{
+	PointColDetector* p_col = (PointColDetector*)handle;
+	return C_Vec3::To(p_col->Get_bbmax());
 }
 
 /*EXPORTED void* PointColDetector_pointid_t_getActor(void* handle)

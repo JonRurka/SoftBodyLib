@@ -77,11 +77,20 @@ void PointColDetector::UpdateInterPoint(bool ignorestate)
 
 void PointColDetector::update_structures_for_contacters(bool ignoreinternal) 
 {
-	m_ref_list.resize(m_object_list_size);
-	m_pointid_list.resize(m_object_list_size);
+	//m_ref_list.resize(m_object_list_size);
+	//m_pointid_list.resize(m_object_list_size);
+	if (m_ref_list != nullptr)
+	{
+		delete m_ref_list;
+		delete m_pointid_list;
+	}
 
-	m_ref_list.clear();
-	m_pointid_list.clear();
+	m_ref_list = new refelem_t[m_object_list_size];
+	m_pointid_list = new pointid_t[m_object_list_size];
+
+
+	//m_ref_list.clear();
+	//m_pointid_list.clear();
 
 	// Insert all contacters into the list of points to consider when building the kdtree
 	int refi = 0;
@@ -93,34 +102,36 @@ void PointColDetector::update_structures_for_contacters(bool ignoreinternal)
 		{
 			if (actor->ar_nodes[i].nd_contacter || (!internal_collision && actor->ar_nodes[i].nd_contactable))
 			{
-				pointid_t tpointid;
+				/*pointid_t tpointid;
 				tpointid.actor = actor;
 				tpointid.node_id = i;
-
+				tpointid.node = &actor->ar_nodes[i];
 				m_pointid_list.push_back(tpointid);
-				//m_pointid_list[refi].actor = actor;
-				//m_pointid_list[refi].node_id = i;
 
 				refelem_t trefelem;
 				trefelem.pidref = &m_pointid_list[refi];
 				trefelem.point = glm::value_ptr(actor->ar_nodes[i].AbsPosition);
+				m_ref_list.push_back(trefelem);*/
 
-				m_ref_list.push_back(trefelem);
-				//m_ref_list[refi].pidref = &m_pointid_list[refi];
-				//m_ref_list[refi].point = glm::value_ptr(actor->ar_nodes[i].AbsPosition);
-
-				/*std::string msg = "(" + std::to_string(m_ref_list[refi].point[0]) + ", " +
-					std::to_string(m_ref_list[refi].point[1]) + ", " + 
-					std::to_string(m_ref_list[refi].point[2]) + ")";
-
-				Logger::LogDebug("PointColDetector::update_structures_for_contacters", msg);*/
+				
+				m_pointid_list[refi].actor = actor;
+				m_pointid_list[refi].node_id = i;
+				m_pointid_list[refi].node = &actor->ar_nodes[i];
+				m_ref_list[refi].pidref = &m_pointid_list[refi];
+				m_ref_list[refi].point = glm::value_ptr(actor->ar_nodes[i].AbsPosition);
+				
+				refi++;
 			}
 		}
 	}
 
-	float x = m_ref_list[1].point[0];
+	if (m_kdtree != nullptr)
+		delete m_kdtree;
 
-	m_kdtree.resize(std::max(1.0, std::pow(2, std::ceil(std::log2(m_object_list_size)) + 1)));
+	int size = std::max(1.0, std::pow(2, std::ceil(std::log2(m_object_list_size)) + 1));
+	m_kdtree = new kdnode_t[size];
+	//m_kdtree.resize(std::max(1.0, std::pow(2, std::ceil(std::log2(m_object_list_size)) + 1)));
+
 }
 
 void PointColDetector::query(const glm::vec3& vec1, const glm::vec3& vec2, const glm::vec3& vec3, float enlargeBB)
@@ -190,7 +201,7 @@ void PointColDetector::queryrec(int kdindex, int axis)
 			}
 
 			int newindex = kdindex + kdindex + 1;
-			if (m_bbmin[axis] < m_kdtree[kdindex].middle)
+			if (m_bbmin[axis] <= m_kdtree[kdindex].middle)
 			{
 				queryrec(newindex, newaxis);
 			}
@@ -230,8 +241,10 @@ void PointColDetector::build_kdtree_incr(int axis, int index)
 		{
 			median = begin + 1;
 
+			auto beg_ = m_ref_list[begin];
+			auto med_ = m_ref_list[median];
 
-			if (m_ref_list[begin].point[axis] > m_ref_list[median].point[axis])
+			if (beg_.point[axis] > med_.point[axis])
 			{
 				std::swap(m_ref_list[begin], m_ref_list[median]);
 			}
@@ -282,7 +295,7 @@ void PointColDetector::build_kdtree_incr(int axis, int index)
 		m_kdtree[index].ref = &m_ref_list[begin];
 		m_kdtree[index].middle = m_kdtree[index].ref->point[axis];
 		m_kdtree[index].min = m_kdtree[index].middle;
-		m_kdtree[index].max = m_kdtree[index].max;
+		m_kdtree[index].max = m_kdtree[index].middle;
 	}
 }
 
@@ -311,7 +324,7 @@ void PointColDetector::partintwo(const int start, const int median, const int en
 
 			std::swap(m_ref_list[i], m_ref_list[j]);
 			i++;
-			j++;
+			j--;
 		}
 		if (j < k)
 		{
@@ -319,7 +332,7 @@ void PointColDetector::partintwo(const int start, const int median, const int en
 		}
 		if (k < i)
 		{
-			m - j;
+			m = j;
 		}
 		x = m_ref_list[k].point[axis];
 	}

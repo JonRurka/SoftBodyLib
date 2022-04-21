@@ -167,11 +167,17 @@ EXPORTED void* PointColDetector_New(void* actor);
 
 EXPORTED int PointColDetector_hit_list(void* handle, SoftBodyLib::PointColDetector::pointid_t* list, int size);
 
+EXPORTED int PointColDetector_numHits(void* handle);
+
 EXPORTED void PointColDetector_UpdateIntraPoint(void* handle, bool contactables = false);
 
 EXPORTED void PointColDetector_UpdateInterPoint(void* handle, bool ignorestate = false);
 
 EXPORTED void PointColDetector_query(void* handle, const C_Vec3 vec1, const C_Vec3 vec2, const C_Vec3 vec3, const float enlargeBB);
+
+EXPORTED C_Vec3 PointColDetector_Get_bbmin(void* handle);
+
+EXPORTED C_Vec3 PointColDetector_Get_bbmax(void* handle);
 
 //EXPORTED void* PointColDetector_pointid_t_getActor(void* handle);
 
