@@ -58,6 +58,10 @@ public:
 
 	void AddCab(std::string const& n1, std::string const& n2, std::string const& n3, int option);
 
+	void AddContacter(std::string const& n1);
+
+	void AddContacters(std::vector<std::string> const& nodes);
+
 private:
 	int lineCounter{ 1 };
 

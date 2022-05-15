@@ -406,15 +406,16 @@ void SoftBodyLib::Actor::resolveCollisions(float max_distance, bool consider_up)
 
 inline void PadBoundingBox(AxisAlignedBox& box) // Internal helper
 {
-	box.setMaximum(box.getMinimum() - BOUNDING_BOX_PADDING);
+	box.setMinimum(box.getMinimum() - BOUNDING_BOX_PADDING);
 	box.setMaximum(box.getMaximum() + BOUNDING_BOX_PADDING);
 }
+
 
 void Actor::UpdateBoundingBoxes()
 {
 	// Reset
-	ar_bounding_box = AxisAlignedBox::BOX_NULL;
-	ar_predicted_bounding_box = AxisAlignedBox::BOX_NULL;
+	//ar_bounding_box = AxisAlignedBox::BOX_NULL;
+	//ar_predicted_bounding_box = AxisAlignedBox::BOX_NULL;
 	for (size_t i = 0; i < ar_collision_bounding_boxes.size(); ++i)
 	{
 		ar_collision_bounding_boxes[i] = AxisAlignedBox::BOX_NULL;
@@ -424,13 +425,23 @@ void Actor::UpdateBoundingBoxes()
 	// Update
 	for (int i = 0; i < ar_num_nodes; i++)
 	{
-		glm::vec3 vel = ar_nodes[i].Velocity;
-		glm::vec3 pos = ar_nodes[i].AbsPosition;
-		int16_t cid = ar_nodes[i].nd_coll_bbox_id;
+		node_t node = ar_nodes[i];
+		glm::vec3 vel = node.Velocity;
+		glm::vec3 pos = node.AbsPosition;
+		int16_t cid = node.nd_coll_bbox_id;
 
-		ar_bounding_box.merge(pos);
-		ar_predicted_bounding_box.merge(pos);
-		ar_predicted_bounding_box.merge(pos + vel);
+		if (i == 0)
+		{
+			ar_bounding_box.setExtents(pos, pos);
+			ar_predicted_bounding_box.setExtents(pos, pos);
+			ar_predicted_bounding_box.merge(pos + vel);
+		}
+		else {
+			ar_bounding_box.merge(pos);
+			ar_predicted_bounding_box.merge(pos);
+			ar_predicted_bounding_box.merge(pos + vel);
+		}
+
 		if (cid != node_t::INVALID_BBOX)
 		{
 			ar_collision_bounding_boxes[cid].merge(pos);
@@ -438,6 +449,10 @@ void Actor::UpdateBoundingBoxes()
 			ar_predicted_coll_bounding_boxes[cid].merge(pos + vel);
 		}
 	}
+
+	
+
+	
 
 	// Finalize - add padding
 	PadBoundingBox(ar_bounding_box);
@@ -447,6 +462,7 @@ void Actor::UpdateBoundingBoxes()
 		PadBoundingBox(ar_collision_bounding_boxes[i]);
 		PadBoundingBox(ar_predicted_coll_bounding_boxes[i]);
 	}
+
 }
 
 void SoftBodyLib::Actor::UpdatePhysicsOrigin()
@@ -481,7 +497,7 @@ void Actor::resetPosition(float px, float pz, bool setInitPosition, float miny)
 	{
 		if (ar_nodes[i].nd_no_ground_contact)
 			continue;
-		float terrainHeight = m_terrain->GetHeightAt(ar_nodes[i].AbsPosition.x, ar_nodes[i].AbsPosition.z);
+		float terrainHeight = m_terrain->GetHeightAt(ar_nodes[i].AbsPosition.x, ar_nodes[i].AbsPosition.z) + 5;
 		vertical_offset += std::max(0.0f, terrainHeight - (ar_nodes[i].AbsPosition.y + vertical_offset));
 	}
 	for (int i = 0; i < ar_num_nodes; i++)
@@ -600,12 +616,18 @@ void Actor::calculateLocalGForces()
 
 bool Actor::CalcForcesEulerPrepare(bool doUpdate)
 {
-	if (m_ongoing_reset)
+	if (m_ongoing_reset) {
+		//Logger::LogDebug("Actor::CalcForcesEulerPrepare()", "Ongoing reset");
 		return false;
-	if (ar_physics_paused)
+	}
+	if (ar_physics_paused) {
+		//Logger::LogDebug("Actor::CalcForcesEulerPrepare()", "ar physics paused");
 		return false;
-	if (ar_state != ActorState::LOCAL_SIMULATED)
+	}
+	if (ar_state != ActorState::LOCAL_SIMULATED) {
+		//Logger::LogDebug("Actor::CalcForcesEulerPrepare()", "ar state not LOCAL_SIMULATED");
 		return false;
+	}
 
 	//if (doUpdate)
 	// todo: hook toggle
@@ -636,8 +658,10 @@ void SoftBodyLib::Actor::CalcNodes()
 		if (!ar_nodes[i].nd_no_ground_contact)
 		{
 			glm::vec3 oripos = ar_nodes[i].AbsPosition;
+
+
 			bool contacted = m_terrain->GetCollisions()->groundCollision(&ar_nodes[i], PHYSICS_DT);
-			contacted |= m_terrain->GetCollisions()->nodeCollision(&ar_nodes[i], PHYSICS_DT, false);
+			//contacted |= m_terrain->GetCollisions()->nodeCollision(&ar_nodes[i], PHYSICS_DT, false);
 			ar_nodes[i].nd_has_ground_contact = contacted;
 			if (ar_nodes[i].nd_has_ground_contact || ar_nodes[i].nd_has_mesh_contact) // todo: investigate nd_has_mesh_contact
 			{
@@ -651,9 +675,13 @@ void SoftBodyLib::Actor::CalcNodes()
 			}
 		}
 
+		//Logger::LogDebug("Actor::CalcNodes", "Node " + std::to_string(i) + ": mass: " + std::to_string(ar_nodes[i].mass) + ", force: " + std::to_string(glm::length(ar_nodes[i].Forces)));
+
 		// integration
 		if (!ar_nodes[i].nd_immovable)
 		{
+			//Logger::LogDebug("Actor::CalcNodes()", "integration: " + 
+			//	std::to_string(ar_nodes[i].Velocity.x) + ", " + std::to_string(ar_nodes[i].Velocity.y) + ", " + std::to_string(ar_nodes[i].Velocity.z));
 			ar_nodes[i].Velocity += ar_nodes[i].Forces / ar_nodes[i].mass * PHYSICS_DT;
 			ar_nodes[i].RelPosition += ar_nodes[i].Velocity * PHYSICS_DT;
 			ar_nodes[i].AbsPosition = ar_origin;
@@ -676,7 +704,7 @@ void SoftBodyLib::Actor::CalcNodes()
 
 		// todo: fuse drag override
 
-		if (!ar_disable_aerodyn_turbulent_drag)
+		if (!ar_disable_aerodyn_turbulent_drag && false)
 		{
 			// add viscous drag (turbulent model)
 			float defdragxspeed = DEFAULT_DRAG * approx_speed;
@@ -703,15 +731,22 @@ void SoftBodyLib::Actor::CalcBeams(bool trigger_hooks)
 			glm::vec3 dis = ar_beams[i].p1->RelPosition - ar_beams[i].p2->RelPosition;
 
 			Real dislen = glm::length2(dis);
-			Real inverted_dislen = fast_invSqrt(dislen);
+			Real inverted_dislen = invSqrt(dislen);//fast_invSqrt(dislen);
 
 			dislen *= inverted_dislen; // todo: what is this doing?
+
+			//Logger::LogDebug("Actor::CalcBeams", "dislen: " + std::to_string(dislen));
 
 			// Calculate beam's deviation from normal
 			Real difftoBeamL = dislen - ar_beams[i].L;
 
-			Real k = ar_beams[i].k;
-			Real d = ar_beams[i].d;
+			//Logger::LogDebug("Actor::CalcBeams", "Beam " + std::to_string(i) + ": L: " + std::to_string(ar_beams[i].L) + ", difftoBeamL: " + std::to_string(difftoBeamL) + ", dislen: " + std::to_string(dislen));
+			//Logger::LogDebug("Actor::CalcBeams", "Beam " + std::to_string(i) + ": Exact len: " + std::to_string(glm::length(dis)));
+
+			Real k = ar_beams[i].k; // tensile spring
+			Real d = ar_beams[i].d; // damping factor
+
+			//Logger::LogDebug("Actor::CalcBeams", "K: " + std::to_string(k) + ", D: " + std::to_string(d));
 
 			// Calculate beam's rate of change
 			float v = glm::dot(ar_beams[i].p1->Velocity - ar_beams[i].p2->Velocity, dis) * inverted_dislen;
@@ -721,7 +756,11 @@ void SoftBodyLib::Actor::CalcBeams(bool trigger_hooks)
 			// bounded SHOCK2
 			// bounded SHOCK3
 			// bounded SUPPORTBEAM
-			// bounded SUPPORTBEAM
+			if (difftoBeamL > 0.0f)
+			{
+				k = 0.0f;
+				d *= 0.1f;
+			}
 			// bounded ROPE
 
 
@@ -738,9 +777,11 @@ void SoftBodyLib::Actor::CalcBeams(bool trigger_hooks)
 				// riggid beam?
 				if (ar_beams[i].bm_type == BEAM_NORMAL && k != 0.0f)
 				{
+					
 					// Actual deformation tests
 					if (slen > ar_beams[i].maxposstress && difftoBeamL < 0.0f) // compression
 					{
+						//Logger::LogDebug("Actor::CalcBeams", "Contracting beam");
 						Real yield_length = ar_beams[i].maxposstress / k;
 						Real deform = difftoBeamL + yield_length * (1.0f - ar_beams[i].plastic_coef);
 						Real Lold = ar_beams[i].L;
@@ -763,6 +804,7 @@ void SoftBodyLib::Actor::CalcBeams(bool trigger_hooks)
 					}
 					else if (slen < ar_beams[i].maxnegstress && difftoBeamL > 0.0f) // expansion
 					{
+						//Logger::LogDebug("Actor::CalcBeams", "Expanding beam");
 						Real yield_length = ar_beams[i].maxnegstress / k;
 						Real deform = difftoBeamL + yield_length * (1.0f - ar_beams[i].plastic_coef);
 						Real Lold = ar_beams[i].L;

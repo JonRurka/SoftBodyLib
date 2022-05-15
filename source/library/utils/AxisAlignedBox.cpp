@@ -30,7 +30,7 @@ THE SOFTWARE.
 namespace SoftBodyLib {
     namespace Util {
         const AxisAlignedBox AxisAlignedBox::BOX_NULL;
-        const AxisAlignedBox AxisAlignedBox::BOX_INFINITE(AxisAlignedBox::EXTENT_INFINITE);
+        const AxisAlignedBox AxisAlignedBox::BOX_INFINITE(AxisAlignedBox::Extent::EXTENT_INFINITE);
 
         /** Tests whether this box intersects a sphere. */
         bool AxisAlignedBox::intersects(const Sphere& s) const

@@ -239,9 +239,9 @@ namespace SoftBodyLib {
         //Ogre::ColourValue fx_colour;
         int fx_colour;
 
-        char name[256];
-        char basename[256];
-        char particle_name[256];
+        //char name[256];
+        //char basename[256];
+        //char particle_name[256];
 
         int fx_particle_amount;         //!< amount of particles
 

@@ -93,8 +93,18 @@ void SoftBodyLib::SimContext::DeleteActor(Actor* actor)
 	m_actor_manager.DeleteActorInternal(actor);
 }
 
-void SoftBodyLib::SimContext::UpdateActors()
+void SoftBodyLib::SimContext::UpdateActors(float dt)
 {
-	m_actor_manager.UpdateActors(nullptr);
+	m_actor_manager.UpdateActors(nullptr, dt);
+}
+
+bool SoftBodyLib::SimContext::IsSimulationPaused()
+{
+	return m_actor_manager.IsSimulationPaused();
+}
+
+void SoftBodyLib::SimContext::SetSimulationPaused(bool v)
+{
+	m_actor_manager.SetSimulationPaused(v);
 }
 

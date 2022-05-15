@@ -47,11 +47,22 @@ EXPORTED void  SimContext_DeleteActor(void* sim_context, void* actor);
 
 EXPORTED void SimContext_ModifyActor(void* sim_context);
 
-EXPORTED void SimContext_UpdateActors(void* sim_context);
+EXPORTED void SimContext_UpdateActors(void* sim_context, float dt);
 
 EXPORTED void* SimContext_GetActorManager(void* sim_context);
 
 EXPORTED int SimContext_GetSimState(void* sim_context);
+
+EXPORTED bool SimContext_IsSimulationPaused(void* sim_context);
+
+EXPORTED void SimContext_SetSimulationPaused(void* sim_context, bool v);
+
+
+// #### ActorManager
+
+EXPORTED void ActorManager_SetSimulationSpeed(void* handle, float speed);
+
+EXPORTED float ActorManager_GetSimulationSpeed(void* handle);
 
 
 // #### Actor
@@ -76,6 +87,9 @@ EXPORTED int Actor_GetNum_contactable_nodes(void* handle);
 
 EXPORTED int Actor_GetNum_contacters(void* handle);
 
+EXPORTED void* Actor_GetBounding_Box(void* handle);
+
+EXPORTED void* Actor_GetPredicted_Bounding_Box(void* handle);
 
 // #### node_t
 
@@ -96,6 +110,24 @@ EXPORTED C_Vec3   Node_t_getAbsPosition_idx(void* ac_handle, int index);
 EXPORTED C_Vec3   Node_t_getVelocity_idx(void* ac_handle, int index);
 
 EXPORTED C_Vec3   Node_t_getForces_idx(void* ac_handle, int index);
+
+
+
+EXPORTED void   Node_t_setRelPosition(void* handle, C_Vec3 pos);
+
+EXPORTED void   Node_t_setAbsPosition(void* handle, C_Vec3 pos);
+
+EXPORTED void   Node_t_setVelocity(void* handle, C_Vec3 vel);
+
+EXPORTED void   Node_t_setForces(void* handle, C_Vec3 force);
+
+EXPORTED void   Node_t_setRelPosition_idx(void* ac_handle, int index, C_Vec3 pos);
+
+EXPORTED void   Node_t_setAbsPosition_idx(void* ac_handle, int index, C_Vec3 pos);
+
+EXPORTED void   Node_t_setVelocity_idx(void* ac_handle, int index, C_Vec3 vel);
+
+EXPORTED void   Node_t_setForces_idx(void* ac_handle, int index, C_Vec3 force);
 
 // #### beam_t
 
@@ -143,7 +175,7 @@ EXPORTED    int Collisions_Base_addCollisionBox(void* handle,
     short event_filter,
     int scripthandler);
 
-EXPORTED    int Collisions_Base_addCollisionTri(void* handle, C_Vec3 p1, C_Vec3 p2, C_Vec3 p3, void* gm);
+EXPORTED    int Collisions_Base_addCollisionTri(void* handle, C_Vec3 p1, C_Vec3 p2, C_Vec3 p3, SoftBodyLib::ground_model_t gm);
 
 EXPORTED    void Collisions_Base_removeCollisionBox(void* handle, int number);
 
@@ -153,11 +185,15 @@ EXPORTED    void Collisions_Base_clearEventCache(void* handle);
 
 EXPORTED    void* Collisions_Base_getCollisionAAB(void* handle);
 
-EXPORTED    C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, void* gm, float penetration);
+EXPORTED    C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, SoftBodyLib::ground_model_t gm, float penetration);
 
 // #### collisions
 
 EXPORTED void* Collisions_New(float terrn_size_x, float terrn_size_y, float terrn_size_z);
+
+EXPORTED void Collisions_addGroundModel(void* handle, const char* name, SoftBodyLib::ground_model_t model);
+
+EXPORTED void Collisions_setDefaultGroundModels(void* handle);
 
 // #### PointColDetector
 
@@ -262,5 +298,16 @@ EXPORTED void FileBuilder_FlushSubmesh(void* handle);
 
 EXPORTED void FileBuilder_AddCab(void* handle, const char* n1, const char* n2, const char* n3, int option);
 
+EXPORTED void FileBuilder_AddContacter(void* handle, const char* n1);
 
+// #### AxisAlignedBox
 
+EXPORTED C_Vec3 AxisAlignedBox_getMinimum(void* handle);
+
+EXPORTED C_Vec3 AxisAlignedBox_getMaximum(void* handle);
+
+EXPORTED C_Vec3 AxisAlignedBox_getSize(void* handle);
+
+EXPORTED C_Vec3 AxisAlignedBox_getCorner(void* handle, int cornerToGet);
+
+EXPORTED bool AxisAlignedBox_contains(void* handle, glm::vec3 v);

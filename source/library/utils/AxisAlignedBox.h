@@ -20,7 +20,7 @@ namespace SoftBodyLib {
         */
         class AxisAlignedBox {
         public:
-            enum Extent
+            enum class Extent
             {
                 EXTENT_NULL,
                 EXTENT_FINITE,
@@ -45,7 +45,7 @@ namespace SoftBodyLib {
             6-------7
             */
 
-            enum CornerEnum {
+            enum class CornerEnum {
                 FAR_LEFT_BOTTOM = 0,
                 FAR_LEFT_TOP = 1,
                 FAR_RIGHT_TOP = 2,
@@ -116,13 +116,13 @@ namespace SoftBodyLib {
             */
             inline void setMinimum(const glm::vec3& vec)
             {
-                mExtent = EXTENT_FINITE;
+                mExtent = Extent::EXTENT_FINITE;
                 mMinimum = vec;
             }
 
             inline void setMinimum(Real x, Real y, Real z)
             {
-                mExtent = EXTENT_FINITE;
+                mExtent = Extent::EXTENT_FINITE;
                 mMinimum.x = x;
                 mMinimum.y = y;
                 mMinimum.z = z;
@@ -150,13 +150,13 @@ namespace SoftBodyLib {
             */
             inline void setMaximum(const glm::vec3& vec)
             {
-                mExtent = EXTENT_FINITE;
+                mExtent = Extent::EXTENT_FINITE;
                 mMaximum = vec;
             }
 
             inline void setMaximum(Real x, Real y, Real z)
             {
-                mExtent = EXTENT_FINITE;
+                mExtent = Extent::EXTENT_FINITE;
                 mMaximum.x = x;
                 mMaximum.y = y;
                 mMaximum.z = z;
@@ -187,7 +187,7 @@ namespace SoftBodyLib {
                 assert((min.x <= max.x && min.y <= max.y && min.z <= max.z) &&
                     "The minimum corner of the box must be less than or equal to maximum corner");
 
-                mExtent = EXTENT_FINITE;
+                mExtent = Extent::EXTENT_FINITE;
                 mMinimum = min;
                 mMaximum = max;
             }
@@ -199,7 +199,7 @@ namespace SoftBodyLib {
                 assert((mx <= Mx && my <= My && mz <= Mz) &&
                     "The minimum corner of the box must be less than or equal to maximum corner");
 
-                mExtent = EXTENT_FINITE;
+                mExtent = Extent::EXTENT_FINITE;
 
                 mMinimum.x = mx;
                 mMinimum.y = my;
@@ -238,7 +238,7 @@ namespace SoftBodyLib {
 
             inline Corners getAllCorners(void) const
             {
-                assert((mExtent == EXTENT_FINITE) && "Can't get corners of a null or infinite AAB");
+                assert((mExtent == Extent::EXTENT_FINITE) && "Can't get corners of a null or infinite AAB");
 
                 // The order of these items is, using right-handed co-ordinates:
                 // Minimum Z face, starting with Min(all), then anticlockwise
@@ -248,15 +248,15 @@ namespace SoftBodyLib {
                 // Only for optimization/compatibility.
                 Corners corners;
 
-                corners[0] = getCorner(FAR_LEFT_BOTTOM);
-                corners[1] = getCorner(FAR_LEFT_TOP);
-                corners[2] = getCorner(FAR_RIGHT_TOP);
-                corners[3] = getCorner(FAR_RIGHT_BOTTOM);
+                corners[0] = getCorner(CornerEnum::FAR_LEFT_BOTTOM);
+                corners[1] = getCorner(CornerEnum::FAR_LEFT_TOP);
+                corners[2] = getCorner(CornerEnum::FAR_RIGHT_TOP);
+                corners[3] = getCorner(CornerEnum::FAR_RIGHT_BOTTOM);
 
-                corners[4] = getCorner(NEAR_RIGHT_TOP);
-                corners[5] = getCorner(NEAR_LEFT_TOP);
-                corners[6] = getCorner(NEAR_LEFT_BOTTOM);
-                corners[7] = getCorner(NEAR_RIGHT_BOTTOM);
+                corners[4] = getCorner(CornerEnum::NEAR_RIGHT_TOP);
+                corners[5] = getCorner(CornerEnum::NEAR_LEFT_TOP);
+                corners[6] = getCorner(CornerEnum::NEAR_LEFT_BOTTOM);
+                corners[7] = getCorner(CornerEnum::NEAR_RIGHT_BOTTOM);
 
                 return corners;
             }
@@ -267,21 +267,21 @@ namespace SoftBodyLib {
             {
                 switch (cornerToGet)
                 {
-                case FAR_LEFT_BOTTOM:
+                case CornerEnum::FAR_LEFT_BOTTOM:
                     return mMinimum;
-                case FAR_LEFT_TOP:
+                case CornerEnum::FAR_LEFT_TOP:
                     return glm::vec3(mMinimum.x, mMaximum.y, mMinimum.z);
-                case FAR_RIGHT_TOP:
+                case CornerEnum::FAR_RIGHT_TOP:
                     return glm::vec3(mMaximum.x, mMaximum.y, mMinimum.z);
-                case FAR_RIGHT_BOTTOM:
+                case CornerEnum::FAR_RIGHT_BOTTOM:
                     return glm::vec3(mMaximum.x, mMinimum.y, mMinimum.z);
-                case NEAR_RIGHT_BOTTOM:
+                case CornerEnum::NEAR_RIGHT_BOTTOM:
                     return glm::vec3(mMaximum.x, mMinimum.y, mMaximum.z);
-                case NEAR_LEFT_BOTTOM:
+                case CornerEnum::NEAR_LEFT_BOTTOM:
                     return glm::vec3(mMinimum.x, mMinimum.y, mMaximum.z);
-                case NEAR_LEFT_TOP:
+                case CornerEnum::NEAR_LEFT_TOP:
                     return glm::vec3(mMinimum.x, mMaximum.y, mMaximum.z);
-                case NEAR_RIGHT_TOP:
+                case CornerEnum::NEAR_RIGHT_TOP:
                     return mMaximum;
                 default:
                     return glm::vec3();
@@ -293,15 +293,15 @@ namespace SoftBodyLib {
                 // TODO:
                 switch (aab.mExtent)
                 {
-                case EXTENT_NULL:
+                case Extent::EXTENT_NULL:
                     //o << "AxisAlignedBox(null)";
                     return o;
 
-                case EXTENT_FINITE:
+                case Extent::EXTENT_FINITE:
                     //o << "AxisAlignedBox(min=" << aab.mMinimum << ", max=" << aab.mMaximum << ")";
                     return o;
 
-                case EXTENT_INFINITE:
+                case Extent::EXTENT_INFINITE:
                     //o << "AxisAlignedBox(infinite)";
                     return o;
 
@@ -319,17 +319,17 @@ namespace SoftBodyLib {
             void merge(const AxisAlignedBox& rhs)
             {
                 // Do nothing if rhs null, or this is infinite
-                if ((rhs.mExtent == EXTENT_NULL) || (mExtent == EXTENT_INFINITE))
+                if ((rhs.mExtent == Extent::EXTENT_NULL) || (mExtent == Extent::EXTENT_INFINITE))
                 {
                     return;
                 }
                 // Otherwise if rhs is infinite, make this infinite, too
-                else if (rhs.mExtent == EXTENT_INFINITE)
+                else if (rhs.mExtent == Extent::EXTENT_INFINITE)
                 {
-                    mExtent = EXTENT_INFINITE;
+                    mExtent = Extent::EXTENT_INFINITE;
                 }
                 // Otherwise if current null, just take rhs
-                else if (mExtent == EXTENT_NULL)
+                else if (mExtent == Extent::EXTENT_NULL)
                 {
                     setExtents(rhs.mMinimum, rhs.mMaximum);
                 }
@@ -352,16 +352,16 @@ namespace SoftBodyLib {
             {
                 switch (mExtent)
                 {
-                case EXTENT_NULL: // if null, use this point
+                case Extent::EXTENT_NULL: // if null, use this point
                     setExtents(point, point);
                     return;
 
-                case EXTENT_FINITE:
+                case Extent::EXTENT_FINITE:
                     mMaximum = Math::makeCeil(mMaximum, point);//mMaximum.makeCeil(point);
                     mMinimum = Math::makeFloor(mMinimum, point);//mMinimum.makeFloor(point);
                     return;
 
-                case EXTENT_INFINITE: // if infinite, makes no difference
+                case Extent::EXTENT_INFINITE: // if infinite, makes no difference
                     return;
                 }
 
@@ -379,7 +379,7 @@ namespace SoftBodyLib {
             */
             inline void transform(const glm::mat4x4& matrix) {
                 // Do nothing if current null or infinite
-                if (mExtent != EXTENT_FINITE)
+                if (mExtent != Extent::EXTENT_FINITE)
                     return;
 
                 glm::vec4 oldMin, oldMax, currentCorner;
@@ -447,35 +447,35 @@ namespace SoftBodyLib {
             */
             inline void setNull()
             {
-                mExtent = EXTENT_NULL;
+                mExtent = Extent::EXTENT_NULL;
             }
 
             /** Returns true if the box is null i.e. empty.
             */
             inline bool isNull(void) const
             {
-                return (mExtent == EXTENT_NULL);
+                return (mExtent == Extent::EXTENT_NULL);
             }
 
             /** Returns true if the box is finite.
             */
             bool isFinite(void) const
             {
-                return (mExtent == EXTENT_FINITE);
+                return (mExtent == Extent::EXTENT_FINITE);
             }
 
             /** Sets the box to 'infinite'
             */
             inline void setInfinite()
             {
-                mExtent = EXTENT_INFINITE;
+                mExtent = Extent::EXTENT_INFINITE;
             }
 
             /** Returns true if the box is infinite.
             */
             bool isInfinite(void) const
             {
-                return (mExtent == EXTENT_INFINITE);
+                return (mExtent == Extent::EXTENT_INFINITE);
             }
 
             /** Returns whether or not this box intersects another. */
@@ -549,16 +549,16 @@ namespace SoftBodyLib {
             {
                 switch (mExtent)
                 {
-                case EXTENT_NULL:
+                case Extent::EXTENT_NULL:
                     return 0.0f;
 
-                case EXTENT_FINITE:
+                case Extent::EXTENT_FINITE:
                 {
                     glm::vec3 diff = mMaximum - mMinimum;
                     return diff.x * diff.y * diff.z;
                 }
 
-                case EXTENT_INFINITE:
+                case Extent::EXTENT_INFINITE:
                     return Math::POS_INFINITY;
 
                 default: // shut up compiler
@@ -571,7 +571,7 @@ namespace SoftBodyLib {
             inline void scale(const glm::vec3& s)
             {
                 // Do nothing if current null or infinite
-                if (mExtent != EXTENT_FINITE)
+                if (mExtent != Extent::EXTENT_FINITE)
                     return;
 
                 // NB assumes centered on origin
@@ -591,15 +591,15 @@ namespace SoftBodyLib {
             {
                 switch (mExtent)
                 {
-                case EXTENT_NULL:
+                case Extent::EXTENT_NULL:
                     return false;
 
-                case EXTENT_FINITE:
+                case Extent::EXTENT_FINITE:
                     return(v.x >= mMinimum.x && v.x <= mMaximum.x &&
                         v.y >= mMinimum.y && v.y <= mMaximum.y &&
                         v.z >= mMinimum.z && v.z <= mMaximum.z);
 
-                case EXTENT_INFINITE:
+                case Extent::EXTENT_INFINITE:
                     return true;
 
                 default: // shut up compiler
@@ -611,7 +611,7 @@ namespace SoftBodyLib {
             /// Gets the centre of the box
             glm::vec3 getCenter(void) const
             {
-                assert((mExtent == EXTENT_FINITE) && "Can't get center of a null or infinite AAB");
+                assert((mExtent == Extent::EXTENT_FINITE) && "Can't get center of a null or infinite AAB");
 
                 return glm::vec3(
                     (mMaximum.x + mMinimum.x) * 0.5f,
@@ -624,13 +624,13 @@ namespace SoftBodyLib {
             {
                 switch (mExtent)
                 {
-                case EXTENT_NULL:
+                case Extent::EXTENT_NULL:
                     return glm::vec3(0, 0, 0);
 
-                case EXTENT_FINITE:
+                case Extent::EXTENT_FINITE:
                     return mMaximum - mMinimum;
 
-                case EXTENT_INFINITE:
+                case Extent::EXTENT_INFINITE:
                     return glm::vec3(
                         Math::POS_INFINITY,
                         Math::POS_INFINITY,
@@ -647,13 +647,13 @@ namespace SoftBodyLib {
             {
                 switch (mExtent)
                 {
-                case EXTENT_NULL:
+                case Extent::EXTENT_NULL:
                     return glm::vec3(0, 0, 0);
 
-                case EXTENT_FINITE:
+                case Extent::EXTENT_FINITE:
                     return (mMaximum - mMinimum) * 0.5f;
 
-                case EXTENT_INFINITE:
+                case Extent::EXTENT_INFINITE:
                     return glm::vec3(
                         Math::POS_INFINITY,
                         Math::POS_INFINITY,

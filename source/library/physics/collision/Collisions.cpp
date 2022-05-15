@@ -95,9 +95,8 @@ Collisions::Collisions(glm::vec3 terrn_size) :
         hashmask++;
     }
 
-    loadDefaultModels();
-    defaultgm = getGroundModelByString("concrete");
-    defaultgroundgm = getGroundModelByString("gravel");
+    //loadDefaultModels();
+    
 
     if (debugMode)
     {
@@ -149,9 +148,23 @@ void Collisions::removeCollisionTri(int number)
 
 }
 
+void SoftBodyLib::Collisions::addGroundModel(const std::string name, ground_model_t newModel)
+{
+    ground_models[name] = newModel;
+}
+
 ground_model_t* Collisions::getGroundModelByString(const std::string name)
 {
-    return nullptr;
+    if (!ground_models.size() || ground_models.find(name) == ground_models.end())
+        return nullptr;
+
+    return &ground_models[name];
+}
+
+void SoftBodyLib::Collisions::setDefaultGroundModels()
+{
+    defaultgm = getGroundModelByString("concrete");
+    defaultgroundgm = getGroundModelByString("gravel");
 }
 
 unsigned int Collisions::hashfunc(unsigned int cellid)
@@ -713,6 +726,7 @@ glm::vec3 SoftBodyLib::primitiveCollision(node_t* node, glm::vec3 velocity, floa
             Fdrag += (Vnormal * m * (1.0f - gm->drag_anisotropy) * da_factor) * normal;
         }
         force += Fdrag;
+        //Logger::LogDebug("Collisions::groundCollision 1", "(" + std::to_string(force.x) + ", " + std::to_string(force.y) + ", " + std::to_string(force.z) + ")");
 
         // Now calculate upwards force based on a simplified boyancy equation;
         // If the fluid is pseudoplastic then boyancy is constrained to only "stopping" a node from going downwards
@@ -726,7 +740,7 @@ glm::vec3 SoftBodyLib::primitiveCollision(node_t* node, glm::vec3 velocity, floa
             }
         }
         force += Fboyancy * normal;
-
+        //Logger::LogDebug("Collisions::groundCollision 2", "(" + std::to_string(force.x) + ", " + std::to_string(force.y) + ", " + std::to_string(force.z) + ")");
     }
 
     // if we are inside or touching the solid ground
@@ -746,6 +760,8 @@ glm::vec3 SoftBodyLib::primitiveCollision(node_t* node, glm::vec3 velocity, floa
             glm::vec3 slipf = node->Forces - Fnormal * normal;
             glm::vec3 slip = velocity - Vnormal * normal;
             float slipv = glm::length(slip);
+            if (slip == glm::vec3(0))
+                slip += glm::vec3(0.0000000001f);
             slip = glm::normalize(slip);
             // If the velocity that we slip is lower than adhesion velocity and
             // we have a downforce and the slip forces are lower than static friction
@@ -758,6 +774,9 @@ glm::vec3 SoftBodyLib::primitiveCollision(node_t* node, glm::vec3 velocity, floa
                 // Static friction model (with a little smoothing to help the integrator deal with it)
                 float ff = -msGreaction * (1.0f - approx_exp(-slipv / gm->va));
                 force += Freaction * normal + ff * slip - slipf;
+
+
+                //Logger::LogDebug("Collisions::groundCollision 3", "(" + std::to_string(force.x) + ", " + std::to_string(force.y) + ", " + std::to_string(force.z) + ")");
             }
             else
             {
@@ -765,6 +784,7 @@ glm::vec3 SoftBodyLib::primitiveCollision(node_t* node, glm::vec3 velocity, floa
                 float g = gm->mc + (gm->ms - gm->mc) * approx_exp(-approx_pow(slipv / gm->vs, gm->alpha));
                 float ff = -(g + std::min(gm->t2 * slipv, 5.0f)) * Greaction;
                 force += Freaction * normal + ff * slip;
+                //Logger::LogDebug("Collisions::groundCollision 4", "(" + std::to_string(force.x) + ", " + std::to_string(force.y) + ", " + std::to_string(force.z) + ")");
             }
             node->nd_avg_collision_slip = node->nd_avg_collision_slip * 0.995f + slipv * 0.005f;
             node->nd_last_collision_slip = slipv * slip;

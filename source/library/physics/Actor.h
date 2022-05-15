@@ -23,6 +23,7 @@ namespace SoftBodyLib {
     {
         friend class ActorSpawner;
         friend class ActorManager;
+        friend class PointColDetector;
 
     public:
 

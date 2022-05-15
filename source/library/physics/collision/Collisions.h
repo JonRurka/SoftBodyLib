@@ -191,7 +191,9 @@ namespace SoftBodyLib {
          int loadGroundModelsConfigFile(std::string filename);
          std::map<std::string, ground_model_t>* getGroundModels() { return &ground_models; };
          void setupLandUse(const char* configfile);
+         void addGroundModel(const std::string name, ground_model_t newModel);
          ground_model_t* getGroundModelByString(const std::string name);
+         void setDefaultGroundModels();
 
          // TODO: Will not be necessary. Mesh will be imported directly
          void getMeshInformation(/*Ogre::Mesh*/ void* mesh, size_t& vertex_count, glm::vec3*& vertices,

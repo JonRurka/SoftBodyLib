@@ -1,6 +1,7 @@
 #include "dll_main.h"
 
 using namespace SoftBodyLib;
+using namespace SoftBodyLib::Util;
 
 #define PHYSICS_DT 0.0005f // fixed dt of 0.5 ms
 
@@ -176,11 +177,11 @@ void SimContext_ModifyActor(void* sim_context)
 	// todo
 }
 
-void SimContext_UpdateActors(void* sim_context)
+void SimContext_UpdateActors(void* sim_context, float dt)
 {
 	SimContext* cont = (SimContext*)sim_context;
 
-	cont->UpdateActors();
+	cont->UpdateActors(dt);
 }
 
 void* SimContext_GetActorManager(void* sim_context)
@@ -197,6 +198,34 @@ int SimContext_GetSimState(void* sim_context)
 	return (int)cont->GetSimState();
 }
 
+EXPORTED bool SimContext_IsSimulationPaused(void* sim_context)
+{
+	SimContext* cont = (SimContext*)sim_context;
+
+	return cont->IsSimulationPaused();
+}
+
+EXPORTED void SimContext_SetSimulationPaused(void* sim_context, bool v)
+{
+	SimContext* cont = (SimContext*)sim_context;
+
+	cont->SetSimulationPaused(v);
+}
+
+
+// #### ActorManager
+
+EXPORTED void ActorManager_SetSimulationSpeed(void* handle, float speed)
+{
+	ActorManager* mang = (ActorManager*)handle;
+	mang->SetSimulationSpeed(speed);
+}
+
+EXPORTED float ActorManager_GetSimulationSpeed(void* handle)
+{
+	ActorManager* mang = (ActorManager*)handle;
+	return mang->GetSimulationSpeed();
+}
 
 
 // #### Actor
@@ -222,7 +251,7 @@ int Actor_GetNodes(void* handle, void** nodes)
 	{
 		void* ptr = &actor->ar_nodes[i];
 
-		printf("%x\n", ptr);
+		//printf("%x\n", ptr);
 
 		nodes[i] = &ptr;
 	}
@@ -287,6 +316,18 @@ EXPORTED int Actor_GetNum_contacters(void* handle)
 	return actor->ar_num_contacters;
 }
 
+EXPORTED void* Actor_GetBounding_Box(void* handle)
+{
+	Actor* actor = (Actor*)handle;
+	return &actor->ar_bounding_box;
+}
+
+EXPORTED void* Actor_GetPredicted_Bounding_Box(void* handle)
+{
+	Actor* actor = (Actor*)handle;
+	return &actor->ar_predicted_bounding_box;
+}
+
 
 // #### node_t
 
@@ -343,6 +384,58 @@ C_Vec3   Node_t_getForces_idx(void* ac_handle, int index)
 {
 	Actor* ac = (Actor*)ac_handle;
 	return C_Vec3::To(ac->ar_nodes[index].Forces);
+}
+
+
+// ## setters
+
+void   Node_t_setRelPosition(void* handle, C_Vec3 pos)
+{
+	node_t* node = (node_t*)handle;
+	node->RelPosition = C_Vec3::From(pos);
+}
+
+void   Node_t_setAbsPosition(void* handle, C_Vec3 pos)
+{
+	node_t* node = (node_t*)handle;
+	node->AbsPosition = C_Vec3::From(pos);
+}
+
+void   Node_t_setVelocity(void* handle, C_Vec3 vel)
+{
+	node_t* node = (node_t*)handle;
+	node->Velocity = C_Vec3::From(vel);
+}
+
+void   Node_t_setForces(void* handle, C_Vec3 force)
+{
+	node_t* node = (node_t*)handle;
+	node->Forces = C_Vec3::From(force);
+}
+
+
+void   Node_t_setRelPosition_idx(void* ac_handle, int index, C_Vec3 pos)
+{
+	Actor* ac = (Actor*)ac_handle;
+	ac->ar_nodes[index].RelPosition = C_Vec3::From(pos);
+}
+
+void   Node_t_setAbsPosition_idx(void* ac_handle, int index, C_Vec3 pos)
+{
+	Actor* ac = (Actor*)ac_handle;
+	ac->ar_nodes[index].AbsPosition = C_Vec3::From(pos);
+}
+
+void   Node_t_setVelocity_idx(void* ac_handle, int index, C_Vec3 vel)
+{
+	Actor* ac = (Actor*)ac_handle;
+	ac->ar_nodes[index].Velocity = C_Vec3::From(vel);
+}
+
+void   Node_t_setForces_idx(void* ac_handle, int index, C_Vec3 force)
+{
+	Actor* ac = (Actor*)ac_handle;
+	ac->ar_nodes[index].Forces = C_Vec3::From(force);
 }
 
 
@@ -450,11 +543,11 @@ int Collisions_Base_addCollisionTri(void* handle,
 	C_Vec3 p1,
 	C_Vec3 p2,
 	C_Vec3 p3,
-	void* gm)
+	ground_model_t gm)
 {
 	Collisions_Base* col = (Collisions_Base*)handle;
 
-	return col->addCollisionTri(C_Vec3::From(p1), C_Vec3::From(p2), C_Vec3::From(p2), (ground_model_t*)gm);
+	return col->addCollisionTri(C_Vec3::From(p1), C_Vec3::From(p2), C_Vec3::From(p2), &gm);
 }
 
 void Collisions_Base_removeCollisionBox(void* handle, int number)
@@ -485,9 +578,9 @@ void* Collisions_Base_getCollisionAAB(void* handle)
 	return &col->getCollisionAAB();
 }
 
-C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, void* gm, float penetration)
+C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 normal, float dt, ground_model_t gm, float penetration)
 {
-	return C_Vec3::To(primitiveCollision((node_t*)node, C_Vec3::From(velocity), mass, C_Vec3::From(normal), dt, (ground_model_t*)gm, penetration));
+	return C_Vec3::To(primitiveCollision((node_t*)node, C_Vec3::From(velocity), mass, C_Vec3::From(normal), dt, &gm, penetration));
 }
 
 
@@ -496,6 +589,18 @@ C_Vec3 C_primitiveCollision(void* node, C_Vec3 velocity, float mass, C_Vec3 norm
 void* Collisions_New(float terrn_size_x, float terrn_size_y, float terrn_size_z)
 {
 	return new Collisions(glm::vec3(terrn_size_x, terrn_size_y, terrn_size_z));
+}
+
+EXPORTED void Collisions_addGroundModel(void* handle, const char* name, ground_model_t model)
+{
+	Collisions* col = (Collisions*)handle;
+	col->addGroundModel(name, model);
+}
+
+EXPORTED void Collisions_setDefaultGroundModels(void* handle)
+{
+	Collisions* col = (Collisions*)handle;
+	col->setDefaultGroundModels();
 }
 
 
@@ -533,7 +638,6 @@ int PointColDetector_hit_list(void* handle, PointColDetector::pointid_t* list, i
 		if (i >= size)
 			break;
 
-		Logger::LogDebug("PointColDetector_hit_list", "Node ID: " + std::to_string(hit->node_id));
 
 		list[i] = *hit;
 		i++;
@@ -784,4 +888,47 @@ void FileBuilder_AddCab(void* handle, const char* n1, const char* n2, const char
 	FileBuilder* builder = (FileBuilder*)handle;
 	builder->AddCab(n1, n2, n3, option);
 }
+
+EXPORTED void FileBuilder_AddContacter(void* handle, const char* n1)
+{
+	FileBuilder* builder = (FileBuilder*)handle;
+	builder->AddContacter(n1);
+}
+
+
+// #### AxisAlignedBox
+
+EXPORTED C_Vec3 AxisAlignedBox_getMinimum(void* handle)
+{
+	AxisAlignedBox* aab = (AxisAlignedBox*)handle;
+	return C_Vec3::To(aab->getMinimum());
+}
+
+EXPORTED C_Vec3 AxisAlignedBox_getMaximum(void* handle)
+{
+	AxisAlignedBox* aab = (AxisAlignedBox*)handle;
+	return C_Vec3::To(aab->getMaximum());
+}
+
+EXPORTED C_Vec3 AxisAlignedBox_getSize(void* handle)
+{
+	AxisAlignedBox* aab = (AxisAlignedBox*)handle;
+	return C_Vec3::To(aab->getSize());
+}
+
+EXPORTED C_Vec3 AxisAlignedBox_getCorner(void* handle, int cornerToGet)
+{
+	AxisAlignedBox* aab = (AxisAlignedBox*)handle;
+	return C_Vec3::To(aab->getCorner((AxisAlignedBox::CornerEnum)cornerToGet));
+}
+
+EXPORTED bool AxisAlignedBox_contains(void* handle, const glm::vec3 v)
+{
+	AxisAlignedBox* aab = (AxisAlignedBox*)handle;
+	return aab->contains(v);
+}
+
+
+
+
 

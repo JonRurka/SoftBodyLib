@@ -58,7 +58,7 @@ Actor* SoftBodyLib::ActorSpawner::SpawnActor()
 {
 	InitializeRig();
 
-	m_actor->ar_collision_range = m_file->collision_range;
+	m_actor->ar_collision_range = 0.05f;//m_file->collision_range;
 
 	// Section 'gobals' in any module
 	PROCESS_SECTION_IN_ANY_MODULE(globals, ProcessGlobals);
@@ -284,9 +284,11 @@ void ActorSpawner::ProcessSubmesh(Submesh& def)
 		{
 			return;
 		}
-		else if (m_actor->ar_num_collcabs >= MAX_CABS)
+
+		if (m_actor->ar_num_collcabs >= MAX_CABS)
 		{
 			// "Collcab limit (" << MAX_CABS << ") exceeded"
+			Logger::LogWarning("ActorSpawner::ProcessSubmesh", "Collcab limit (" + std::to_string(MAX_CABS) + ") exceeded!");
 			return;
 		}
 
@@ -297,18 +299,26 @@ void ActorSpawner::ProcessSubmesh(Submesh& def)
 		m_actor->ar_cabs[m_actor->ar_num_cabs * 3 + 2] = GetNodeIndexOrThrow(cab_itor->nodes[2]);
 
 		// TODO:
-		bool isContact = false;
-		bool isTougher = false;
-		bool isInvulnerable = false;
-		if (isContact || isTougher || isInvulnerable)
+		bool isContact = true;
+		if (isContact)
 		{
 			m_actor->ar_collcabs[m_actor->ar_num_collcabs] = m_actor->ar_num_cabs;
 			m_actor->ar_num_collcabs++;
 		}
 
-
+		m_actor->ar_num_cabs++;
 		
 	}
+
+	// close the current mesh
+	CabSubmesh submesh;
+	//submesh.texcoords_pos
+	submesh.cabs_pos = static_cast<unsigned int>(m_actor->ar_num_cabs);
+	submesh.backmesh_type = CabSubmesh::BACKMESH_NONE;
+	m_oldstyle_cab_submeshes.push_back(submesh);
+
+
+	/* BACKMESH */
 }
 
 void ActorSpawner::ProcessContacter(Node::Ref& node_ref)

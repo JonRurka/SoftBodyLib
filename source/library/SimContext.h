@@ -32,14 +32,18 @@ namespace SoftBodyLib {
         Actor* SpawnActor(ActorSpawnRequest& rq, FileBuilder* file_builder);
         //void                ModifyActor(ActorModifyRequest& rq);
         void                DeleteActor(Actor* actor);
-        void                UpdateActors();
+        void                UpdateActors(float dt);
         ActorManager* GetActorManager() { return &m_actor_manager; }
         SimState GetSimState() { return m_sim_state; }
         void SetSimState(SimState newState) { m_sim_state = newState; }
 
+        bool           IsSimulationPaused();
+        void           SetSimulationPaused(bool v);
+
         C_Vec3 DoTest(SoftBodyLib::ActorSpawnRequest rq) {
             return C_Vec3::To(rq.asr_position);
         }
+
 
     private:
 

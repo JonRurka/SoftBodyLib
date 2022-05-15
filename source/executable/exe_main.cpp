@@ -5,9 +5,18 @@
 
 using namespace SoftBodyLib;
 
+struct test_strct {
+	int tst_1;
+	float tst_2;
+	unsigned long tst_3;
+	void* ptr;
+};
+
 int main()
 {
-	SimContext context;
+
+
+
 
 
 

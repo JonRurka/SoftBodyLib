@@ -15,7 +15,7 @@ namespace SoftBodyLib {
 		~ActorManager();
 
 		Actor*			CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<File> def);
-		void			UpdateActors(Actor* player_actor);
+		void			UpdateActors(Actor* player_actor, float dt);
 		void			SyncWithSimThread();
 		void			UpdatePhysicsSimulation();
 

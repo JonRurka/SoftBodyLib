@@ -69,11 +69,11 @@ void FileBuilder::SetBeamDefaults(
 )
 {
 	BeamDefaults defaults;
-	defaults.springiness = springiness;
-	defaults.damping_constant = damping_constant;
-	defaults.deformation_threshold = deformation_threshold;
-	defaults.breaking_threshold = breaking_threshold;
-	defaults.visual_beam_diameter = visual_beam_diameter;
+	defaults.springiness = springiness == -1 ? DEFAULT_SPRING : springiness;
+	defaults.damping_constant = damping_constant == -1 ? DEFAULT_DAMP : damping_constant;
+	defaults.deformation_threshold = deformation_threshold == -1 ? BEAM_DEFORM : deformation_threshold;
+	defaults.breaking_threshold = breaking_threshold == -1 ? BEAM_BREAK : breaking_threshold;
+	defaults.visual_beam_diameter = visual_beam_diameter == -1 ? DEFAULT_BEAM_DIAMETER : visual_beam_diameter;
 	defaults.beam_material_name = beam_material_name;
 	defaults.plastic_deform_coef = plastic_deform_coef;
 	defaults.enable_advanced_deformation = enable_advanced_deformation;
@@ -167,5 +167,16 @@ void FileBuilder::AddCab(std::string const& n1, std::string const& n2, std::stri
 	lineCounter++;
 }
 
+void FileBuilder::AddContacter(std::string const& n1)
+{
+	file.root_module->contacters.push_back(getNodeRef(n1));
+	lineCounter++;
+}
 
-
+void FileBuilder::AddContacters(std::vector<std::string> const& nodes)
+{
+	for (int i = 0; i < nodes.size(); i++)
+	{
+		AddContacter(nodes[i]);
+	}
+}

@@ -119,12 +119,19 @@ inline float approx_invSqrt(const float y)
     return *(float *)&i;
 }
 
+inline float invSqrt(const float v)
+{
+    return 1.0f / sqrt(v);
+}
+
 // This function is a classic 1/square_root(x)code
 // used by quake's game engine.
 // It is very fast and has enough precision
 // to drive a physics engine.
 inline float fast_invSqrt(const float v)
 {
+    return invSqrt(v);
+
     float y = v;
     int i = 0x5f3759df - ( (*(int *)&y) >>1);
     y = *(float *)&i;
@@ -132,6 +139,8 @@ inline float fast_invSqrt(const float v)
     y *= (1.5f - (0.5f * v * y * y));
     return y;
 }
+
+
 
 // It calculates a fast and accurate square_root(x)
 inline float fast_sqrt(const float x)

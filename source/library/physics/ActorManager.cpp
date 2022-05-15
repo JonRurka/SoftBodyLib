@@ -122,15 +122,16 @@ void ActorManager::SetupActor(Actor* actor, ActorSpawnRequest rq, std::shared_pt
 	// actor->m_min_camera_radius = std::sqrt(actor->m_min_camera_radius) * 1.2f; // twenty percent buffer
 
 	// fix up submesh collision model
-	std::string subMeshGroundModelName = "";// TODO: spawner.GetSubmeshGroundmodelName();
-	if (!subMeshGroundModelName.empty())
+	//std::string subMeshGroundModelName = "";// TODO: spawner.GetSubmeshGroundmodelName();
+	//if (!subMeshGroundModelName.empty())
+	//{
+	actor->ar_submesh_ground_model = ((Collisions*)collision)->getGroundModelByString("concrete"); //nullptr;// TODO: App::GetSimTerrain()->GetCollisions()->getGroundModelByString(subMeshGroundModelName);
+	if (!actor->ar_submesh_ground_model)
 	{
-		actor->ar_submesh_ground_model = nullptr;// TODO: App::GetSimTerrain()->GetCollisions()->getGroundModelByString(subMeshGroundModelName);
-		if (!actor->ar_submesh_ground_model)
-		{
-			actor->ar_submesh_ground_model = nullptr;// TODO: App::GetSimTerrain()->GetCollisions()->defaultgm;
-		}
+		Logger::LogError("Setup Actor", "No Ground Model for actor!");
+		actor->ar_submesh_ground_model = nullptr;//collision->defaultgm;
 	}
+	//}
 
 	// Set beam defaults
 	for (int i = 0; i < actor->ar_num_beams; i++)
@@ -144,9 +145,10 @@ void ActorManager::SetupActor(Actor* actor, ActorSpawnRequest rq, std::shared_pt
 
 	// TRIGGER_EVENT(SE_GENERIC_NEW_TRUCK, actor->ar_instance_id);
 
-	actor->ar_state = ActorState::LOCAL_SLEEPING;
+	actor->ar_state = ActorState::LOCAL_SIMULATED;
+	actor->ar_physics_paused = false;
 
-	// LOG(" ===== DONE LOADING VEHICLE");
+	Logger::LogInfo("Actor Spawner", " ===== DONE LOADING VEHICLE");
 }
 
 Actor* ActorManager::CreateActorInstance(ActorSpawnRequest rq, std::shared_ptr<File> def)
@@ -204,8 +206,22 @@ std::vector<Actor*> SoftBodyLib::ActorManager::GetLocalActors()
 	return actors;
 }
 
-void SoftBodyLib::ActorManager::UpdateActors(Actor* player_actor)
+void SoftBodyLib::ActorManager::UpdateActors(Actor* player_actor, float g_dt)
 {
+	if (m_simulation_paused)
+	{
+		m_simulation_time = 0.f;
+		//Logger::LogDebug("ActorManager::UpdateActors", "SIM PAUSED");
+	}
+	else
+	{
+		m_simulation_time = g_dt;
+		//Logger::LogDebug("ActorManager::UpdateActors", "Sime Time: " + std::to_string(m_simulation_time));
+	}
+
+
+
+
 	float dt = m_simulation_time;
 
 	// do not allow dt > 1/20
@@ -215,8 +231,12 @@ void SoftBodyLib::ActorManager::UpdateActors(Actor* player_actor)
 
 	dt += m_dt_remainder;
 	m_physics_steps = dt / PHYSICS_DT;
+
+	//Logger::LogDebug("ActorManager::UpdateActors", "m_physics_steps: " + std::to_string(m_physics_steps));
+
 	if (m_physics_steps == 0)
 	{
+		//Logger::LogDebug("ActorManager::UpdateActors", "m_physics_steps == 0");
 		return;
 	}
 
@@ -251,17 +271,19 @@ void SoftBodyLib::ActorManager::SyncWithSimThread()
 
 void SoftBodyLib::ActorManager::UpdatePhysicsSimulation()
 {
+	//Logger::LogDebug("ActorManager::UpdatePhysicsSimulation", "UpdatePhysicsSimulation");
 	for (auto actor : m_actors)
 	{
 		actor->UpdatePhysicsOrigin();
 	}
-
+	//Logger::LogDebug("ActorManager::UpdatePhysicsSimulation", "finished UpdatePhysicsOrigin");
 	for (int i = 0; i < m_physics_steps; i++)
 	{
 		for (auto actor : m_actors)
 		{
 			if (actor->ar_update_physics = actor->CalcForcesEulerPrepare(i == 0))
 			{
+				//Logger::LogDebug("ActorManager::UpdatePhysicsSimulation", "CalcForcesEulerPrepare was true");
 				actor->CalcForcesEulerCompute(1 == 0, m_physics_steps);
 			}
 		}

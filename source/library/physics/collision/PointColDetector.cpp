@@ -25,7 +25,7 @@ void PointColDetector::UpdateInterPoint(bool ignorestate)
 {
 	m_linked_actors = m_actor->getAllLinkedActors(); 
 
-	std::vector<Actor*> allActors; // TODO
+	std::vector<Actor*> allActors = m_actor->m_actor_manager->GetActors();
 
 	int contacters_size = 0;
 	std::vector<Actor*> collision_partners;
@@ -124,6 +124,7 @@ void PointColDetector::update_structures_for_contacters(bool ignoreinternal)
 			}
 		}
 	}
+
 
 	if (m_kdtree != nullptr)
 		delete m_kdtree;
